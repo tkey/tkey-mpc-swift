@@ -88,7 +88,7 @@ public class ThresholdKey {
         return Metadata(pointer: result!)
     }
 
-    private func initialize(importShare: String?, input: ShareStore?, neverInitializeNewKey: Bool?, includeLocalMetadataTransitions: Bool?,
+    private func initialize(importKey: String?, input: ShareStore?, neverInitializeNewKey: Bool?, includeLocalMetadataTransitions: Bool?,
                             useTss: Bool = false, deviceTssShare: String?, deviceTssIndex: Int32?, tssFactorPub: KeyPoint?,
                             completion: @escaping (Result<KeyDetails, Error>) -> Void) {
         tkeyQueue.async {
@@ -98,8 +98,8 @@ public class ThresholdKey {
                 var tssDeviceSharePointer: UnsafeMutablePointer<Int8>?
                 var tssFactorPubPointer: OpaquePointer?
                 var deviceIndex: Int32 = deviceTssIndex ?? 2
-                if importShare != nil {
-                    sharePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: importShare!).utf8String)
+                if importKey != nil {
+                    sharePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: importKey!).utf8String)
                 }
 
                 if deviceTssShare != nil {
@@ -136,7 +136,7 @@ public class ThresholdKey {
     /// Initializes a `ThresholdKey` object.
     ///
     /// - Parameters:
-    ///   - importShare: Share to be imported, optional.
+    ///   - importKey: Final Tkey (metadataKey) to be imported, optional.
     ///   - input: `ShareStore` to be used, optional.
     ///   - neverInitializeNewKey: Do not initialize a new tKey if an existing one is found.
     ///   - includeLocalMetadataTransitions: Proritize existing metadata transitions over cloud fetched transitions.
@@ -148,12 +148,12 @@ public class ThresholdKey {
     /// - Returns: `KeyDetails`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters.
-    public func initialize(importShare: String? = nil, input: ShareStore? = nil, neverInitializeNewKey: Bool? = nil,
+    public func initialize(importKey: String? = nil, input: ShareStore? = nil, neverInitializeNewKey: Bool? = nil,
                            includeLocalMetadataTransitions: Bool? = nil, useTss: Bool = false, deviceTssShare: String? = nil,
                            deviceTssIndex: Int32? = nil, tssFactorPub: KeyPoint? = nil) async throws -> KeyDetails {
         return try await withCheckedThrowingContinuation {
             continuation in
-            self.initialize(importShare: importShare, input: input, neverInitializeNewKey: neverInitializeNewKey,
+            self.initialize(importKey: importKey, input: input, neverInitializeNewKey: neverInitializeNewKey,
                             includeLocalMetadataTransitions: includeLocalMetadataTransitions, useTss: useTss, deviceTssShare: deviceTssShare,
                             deviceTssIndex: deviceTssIndex, tssFactorPub: tssFactorPub) {
                 result in
