@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Check PR source branch
         run: |
-          if ["${{ github.event.pull_request.base.ref }}" == "main" && "${{ github.event.pull_request.head.ref }}" != "alpha" ]; then
+          if ["${{ github.event.pull_request.base.ref }}" == "main" ] && [ "${{ github.event.pull_request.head.ref }}" != "alpha" ]; then
             echo "Only pull requests from the alpha branch are allowed to main."
             exit 1
           fi
