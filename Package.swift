@@ -6,7 +6,9 @@ import PackageDescription
 let package = Package(
     name: "tkey_pkg",
     platforms: [
-        .iOS(SupportedPlatform.IOSVersion.v14),
+        .iOS(SupportedPlatform.IOSVersion.v13),
+        .macOS(.v10_15)
+        
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -16,14 +18,13 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
-        .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , branch: "alpha"),
+        // .package(url: /* package url */, from: "1.0.0")
+       .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , branch: "feat/update-fnd"),
+        // .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , from: "6.0.0-alpha"),
         // dev dependencies only
         .package(name:"CryptoSwift", url: "https://github.com/krzyzanowskim/CryptoSwift.git",from: "1.5.1"),
         .package(name:"jwt-kit", url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0"),
-        .package(name: "SwiftLint", url: "https://github.com/realm/SwiftLint", from: "0.52.4")
-        
-        
+//        .package(name: "SwiftLint", url: "https://github.com/realm/SwiftLint", from: "0.52.4")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -38,9 +39,10 @@ let package = Package(
         .target(
             name: "tkey-pkg",
             dependencies: ["lib", "TorusUtils"],
-            path: "Sources/ThresholdKey",
-            plugins: [.plugin(name: "SwiftLintPlugin", package: "SwiftLint")]
+            path: "Sources/ThresholdKey"
+//            plugins: [.plugin(name: "SwiftLintPlugin", package: "SwiftLint")]
         ),
+
         .testTarget(
             name: "tkey-pkgTests",
             dependencies: ["tkey-pkg", "CryptoSwift", .product(name: "JWTKit", package: "jwt-kit")],
