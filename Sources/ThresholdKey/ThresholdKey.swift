@@ -681,7 +681,6 @@ public class ThresholdKey {
     /// - Parameters:
     ///   - input_json: input in json string
     ///   - private_key: private key used to encrypt and store.
-    /// - Returns: `Void`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
      public func add_local_metadata_transitions( inputJson: String, privateKey: String ) throws {

@@ -1,32 +1,30 @@
-# tkey iOS SDK
+# tkey iOS SDK - TSS
 
-The tKey SDK manages private keys by generating shares of it using Shamir Secret Sharing. Multi-party computation of shares is also planned for this SDK and is currently in an advanced stage of development but not quite ready to be merged into the main codebase yet.
+Web3Auth uses tKey MPC to manage user wallets in a distributed fashion, leveraging various factors or shares managed by users, including their devices, private inputs, backup locations, and cloud service providers. As long as a user can access 2 out of n (2/n) of these shares, they can access their key.
 
-The companion example application is [here](https://github.com/torusresearch/tkey-rust-ios-example/).
+The companion example application is [here](https://github.com/torusresearch/tkey-rust-ios-example/tree/alpha).
 
 If you are instead seeking the Android implementation, please see [here](https://github.com/torusresearch/tkey-rust-android).
 
-## Including this package
+### Add the [MPC tKey iOS SDK](https://github.com/tkey/tkey-ios/tree/alpha)
 
-1. Open Xcode project > select File > Swift Packages > Add Package Dependency 
+1. In Xcode, with your app project open, navigate to **File > Add Packages**.
 
-2. Enter the url https://github.com/torusresearch/tkey-rust-ios
+1. When prompted, add the tKey iOS SDK repository:
 
+   ```sh
+   https://github.com/tkey/tkey-ios
+   ```
 
-## Integration with CustomAuth
+   From the `Dependency Rule` dropdown, select `Branch` and type `alpha` as the branch.
 
-This standalone package can be used with CustomAuth. Please refer to the example application for a more comprehensive overview of the code.
+1. When finished, Xcode will automatically begin resolving and downloading your dependencies in the background.
 
-The integration process is simple:
-1. Log in with CustomAuth, for detailed documentation on how to do this please refer to the documentation [here](https://github.com/torusresearch/customauth-swift-sdk).
+## Documentation
 
-2. Use the `userData["privateKey"]` field result as the postbox key when setting up the ServiceProvider.
+Follow the full documentation [here](https://web3auth.io/docs/sdk/core-kit/mpc-tkey-ios).
 
-3. Continue initialization as normal.
-
-4. Remember to save the device share or the account will need to be reset. For existing accounts, shares will need to be imported, either by making use of a security share or via manual entry depending on how the ThresholdKey was initially setup.
-
-## SDK Design Overview
+## SDK Overview
 
 The design of the SDK is relatively straight forward. 
 
@@ -44,11 +42,9 @@ Currently only the Secp256k1 curve is supported.
 
 Please note that all code examples are minimilistic in nature, this is intentionally done for clarity, since most functions can throw.
 
-## SDK Overview
-
 ### ThresholdKey
 
-The instance of tkey, this can be considered the most important object in the SDK. 
+The instance of tkey, this can be considered the most important object in the SDK.
 
 ##### Creation
 
@@ -79,7 +75,7 @@ Additionally the following optional parameters can be supplied to this call
 | Parameter | Type | Description |
 | --------- | ---- | ----------- |
 | import_share | String | Initialise tkey with an existing share. This allows you to directly initialise tKey without using the service provider login. |
-| input | ShareStore | Import an existing ShareStore into tkey. | 
+| input | ShareStore | Import an existing ShareStore into tkey. |
 
 #### Reconstructing the Private Key
 
@@ -101,10 +97,9 @@ This returns a KeyDetails object.
 
 Whenever a method is called which affects the state of the ThresholdKey, this method will need to be called again if updated details of the ThresholdKey is needed.
 
-
 #### Generating a new Share
 
-Shares are generated on the same threshold (e.g, 2/3 -> 2/4). A GenerateShareStoreResult object is returned by the function. 
+Shares are generated on the same threshold (e.g, 2/3 -> 2/4). A GenerateShareStoreResult object is returned by the function.
 
 ```swift
    let newShare = try! await threshold_key.generate_new_share()
@@ -128,7 +123,7 @@ This module provides an interface for setting, getting and managing private keys
 
 #### SecurityQuestionModule
 
-This module allows the creation of a security share with a password. This is particularly useful to recover a ThresholdKey 
+This module allows the creation of a security share with a password. This is particularly useful to recover a ThresholdKey
 
 #### SeedPhraseModule
 
