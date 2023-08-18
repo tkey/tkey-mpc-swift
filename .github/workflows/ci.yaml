@@ -19,5 +19,21 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: "14.2.0"
+      
+      - name: Set Up Swift
+        uses: actions/setup-swift@v2
+        with:
+          swift-version: 5.5
+
+      - name: Install SwiftLint
+        run: |
+          swift --version
+          git clone https://github.com/realm/SwiftLint.git
+          cd SwiftLint
+          git checkout 0.52.4 # Replace with the desired SwiftLint version tag
+          swift build --disable-sandbox -c release
+          cp -f .build/release/swiftlint /usr/local/bin/
+          swiftlint version
+
       - name: package
         run: xcodebuild test -scheme tkey_pkg -destination "platform=iOS Simulator,OS=16.2,name=iPhone 14" COMPILER_INDEX_STORE_ENABLE=NO
