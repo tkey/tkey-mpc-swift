@@ -16,6 +16,8 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       
+      - name: Lint code using SwiftLint
+        run: swiftlint lint ./Source --reporter github-actions-logging
 
       - name: Build
         run: swift build -v
