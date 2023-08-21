@@ -1,11 +1,10 @@
 import XCTest
 import Foundation
 @testable import tkey_pkg
-import Foundation
 
 final class tkey_pkgStorageLayerTests: XCTestCase {
     func test_storage() {
         let url = "https://metadata.tor.us"
-        _ = try! StorageLayer.init(enable_logging: true, host_url: url, server_time_offset: 2)
+        _ = try! StorageLayer.init(enableLogging: true, hostUrl: url, serverTimeOffset: 2)
     }
 }

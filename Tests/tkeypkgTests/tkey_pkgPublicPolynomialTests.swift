@@ -1,21 +1,20 @@
 import XCTest
 import Foundation
 @testable import tkey_pkg
-import Foundation
 
 final class tkey_pkgPublicPolynomialTests: XCTestCase {
     private var data: PublicPolynomial!
     private var share_indexes: [String]!
-    
+
     override func setUp() async throws {
-        let postbox_key = try! PrivateKey.generate()
-        let storage_layer = try! StorageLayer(enable_logging: true, host_url: "https://metadata.tor.us", server_time_offset: 2)
-        let service_provider = try! ServiceProvider(enable_logging: true, postbox_key: postbox_key.hex)
+        let postboxKey = try! PrivateKey.generate()
+        let storageLayer = try! StorageLayer(enableLogging: true, hostUrl: "https://metadata.tor.us", serverTimeOffset: 2)
+        let serviceProvider = try! ServiceProvider(enableLogging: true, postboxKey: postboxKey.hex)
         let threshold = try! ThresholdKey(
-            storage_layer: storage_layer,
-            service_provider: service_provider,
-            enable_logging: true,
-            manual_sync: false
+            storageLayer: storageLayer,
+            serviceProvider: serviceProvider,
+            enableLogging: true,
+            manualSync: false
         )
 
         _ = try! await threshold.initialize()
@@ -24,18 +23,17 @@ final class tkey_pkgPublicPolynomialTests: XCTestCase {
         share_indexes = try! threshold.get_shares_indexes()
         XCTAssertNotEqual(share_indexes.count, 0)
     }
-    
+
     override func tearDown() {
         data = nil
     }
-    
+
     func test_get_threshold() {
         XCTAssertNotEqual(try! data.getThreshold(), 0)
     }
-    
+
     func test_commitment_eval() {
-        for index in share_indexes
-        {
+        for index in share_indexes {
             _ = try! data.polyCommitmentEval(index: index)
         }
     }

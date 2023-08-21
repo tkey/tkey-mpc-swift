@@ -11,9 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check PR source branch
+      - name: branch_check
         run: |
-          if ["${{ github.event.pull_request.base.ref }}" == "main" && "${{ github.event.pull_request.head.ref }}" != "alpha" ]; then
+          source_branch="${{ github.event.pull_request.head.ref }}"
+          destination_branch="${{ github.event.pull_request.base.ref }}"
+          if [ "$destination_branch" = "main" ] && [ "$source_branch" != "alpha" ]; then
             echo "Only pull requests from the alpha branch are allowed to main."
             exit 1
           fi
