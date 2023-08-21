@@ -141,10 +141,10 @@ public class ThresholdKey {
     /// - Returns: `KeyDetails`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters.
-    public func initialize(import_share: String? = nil, input: ShareStore? = nil, never_initialize_new_key: Bool? = nil, include_local_metadata_transitions: Bool? = nil, use_tss: Bool = false, device_tss_share: String? = nil, device_tss_index: Int32? = nil, tss_factor_pub: KeyPoint? = nil) async throws -> KeyDetails {
+    public func initialize(import_share: String? = nil, input: ShareStore? = nil, never_initialize_new_key: Bool? = nil, include_local_metadata_transitions: Bool? = nil, delete_1_of_1: Bool = false, use_tss: Bool = false, device_tss_share: String? = nil, device_tss_index: Int32? = nil, tss_factor_pub: KeyPoint? = nil) async throws -> KeyDetails {
         return try await withCheckedThrowingContinuation {
             continuation in
-            self.initialize(import_share: import_share, input: input, never_initialize_new_key: never_initialize_new_key, include_local_metadata_transitions: include_local_metadata_transitions, use_tss: use_tss, device_tss_share: device_tss_share, device_tss_index: device_tss_index, tss_factor_pub: tss_factor_pub) {
+            self.initialize(import_share: import_share, input: input, never_initialize_new_key: never_initialize_new_key, include_local_metadata_transitions: include_local_metadata_transitions, delete_1_of_1: delete_1_of_1, use_tss: use_tss, device_tss_share: device_tss_share, device_tss_index: device_tss_index, tss_factor_pub: tss_factor_pub) {
                 result in
                 switch result {
                 case let .success(result):
