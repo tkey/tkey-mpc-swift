@@ -84,7 +84,7 @@ public class ThresholdKey {
         return Metadata(pointer: result!)
     }
 
-    private func initialize(import_share: String?, input: ShareStore?, never_initialize_new_key: Bool?, include_local_metadata_transitions: Bool?, use_tss: Bool = false, device_tss_share: String?, device_tss_index: Int32?, tss_factor_pub: KeyPoint?, completion: @escaping (Result<KeyDetails, Error>) -> Void) {
+    private func initialize(import_share: String?, input: ShareStore?, never_initialize_new_key: Bool?, include_local_metadata_transitions: Bool?, delete_1_of_1 : Bool = false, use_tss: Bool = false, device_tss_share: String?, device_tss_index: Int32?, tss_factor_pub: KeyPoint?, completion: @escaping (Result<KeyDetails, Error>) -> Void) {
         tkeyQueue.async {
             do {
                 var errorCode: Int32 = -1
@@ -114,7 +114,7 @@ public class ThresholdKey {
 
                 let curvePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: self.curveN).utf8String)
                 let ptr = withUnsafeMutablePointer(to: &device_index, { tssDeviceIndexPointer in withUnsafeMutablePointer(to: &errorCode, { error in
-                    threshold_key_initialize(self.pointer, sharePointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, curvePointer, use_tss, tssDeviceSharePointer, tssDeviceIndexPointer, tssFactorPubPointer, error) }) })
+                    threshold_key_initialize(self.pointer, sharePointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, delete_1_of_1, curvePointer, use_tss, tssDeviceSharePointer, tssDeviceIndexPointer, tssFactorPubPointer, error) }) })
                 guard errorCode == 0 else {
                     throw RuntimeError("Error in ThresholdKey Initialize")
                 }
