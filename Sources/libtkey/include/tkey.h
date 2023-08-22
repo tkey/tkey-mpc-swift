@@ -45,7 +45,7 @@
         char* key_point_encode(struct KeyPoint* point, char* enc, int* error_code);
         void key_point_free(struct KeyPoint* point);
         char* key_reconstruction_get_private_key(struct KeyReconstructionDetails* key_details, int* error_code);
-    int key_reconstruction_get_seed_phrase_len(struct KeyReconstructionDetails* key_details, int* void threshold_key_import_tss_key(struct FFIThresholdKey* threshold_key, bool update_metadata, char* tss_tag, char* import_key, struct KeyPoint* factor_pub, int new_tss_index, struct ServerOpts* server_opts, char* curve_n, int* error_code);error_code);
+        int key_reconstruction_get_seed_phrase_len(struct KeyReconstructionDetails* key_details, int* error_code);
         char* key_reconstruction_get_seed_phrase_at(struct KeyReconstructionDetails* key_details, int at, int* error_code);
         int key_reconstruction_get_all_keys_len(struct KeyReconstructionDetails* key_details, int* error_code);
         char* key_reconstruction_get_all_keys_at(struct KeyReconstructionDetails* key_details, int at, int* error_code);
