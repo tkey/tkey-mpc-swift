@@ -30,7 +30,8 @@
         struct TssOptions;
         struct NodeDetails;
         struct FFIRssComm;
-
+        struct ServerOpts;
+    
         //Methods
         char* get_version(int* error_code);
         void string_free(char *ptr);
@@ -44,7 +45,7 @@
         char* key_point_encode(struct KeyPoint* point, char* enc, int* error_code);
         void key_point_free(struct KeyPoint* point);
         char* key_reconstruction_get_private_key(struct KeyReconstructionDetails* key_details, int* error_code);
-        int key_reconstruction_get_seed_phrase_len(struct KeyReconstructionDetails* key_details, int* error_code);
+    int key_reconstruction_get_seed_phrase_len(struct KeyReconstructionDetails* key_details, int* void threshold_key_import_tss_key(struct FFIThresholdKey* threshold_key, bool update_metadata, char* tss_tag, char* import_key, struct KeyPoint* factor_pub, int new_tss_index, struct ServerOpts* server_opts, char* curve_n, int* error_code);error_code);
         char* key_reconstruction_get_seed_phrase_at(struct KeyReconstructionDetails* key_details, int at, int* error_code);
         int key_reconstruction_get_all_keys_len(struct KeyReconstructionDetails* key_details, int* error_code);
         char* key_reconstruction_get_all_keys_at(struct KeyReconstructionDetails* key_details, int at, int* error_code);
@@ -79,6 +80,7 @@
         struct ShareStoreMap* generate_new_share_store_result_get_share_store_map(struct GenerateShareStoreResult* result,int* error_code);
         void generate_share_store_result_free(struct GenerateShareStoreResult* ptr);
         void share_store_poly_id_index_map_free(struct ShareStorePolyIDShareIndexMap* ptr);
+        void threshold_key_import_tss_key(struct FFIThresholdKey* threshold_key, bool update_metadata, char* tss_tag, char* import_key, struct KeyPoint* factor_pub, int new_tss_index, struct ServerOpts* server_opts, char* curve_n, int* error_code);
         struct GenerateShareStoreResult* threshold_key_generate_share(struct FFIThresholdKey* threshold_key, char* curve_n, bool use_tss, struct TssOptions* tss_options, int* error_code);
         void threshold_key_delete_share(struct FFIThresholdKey* threshold_key, char* share_index, char* curve_n, bool use_tss, struct TssOptions* tss_options, int* error_code);
         void threshold_key_delete_tkey(struct FFIThresholdKey* threshold_key, char* curve_n, int* error_code);
@@ -199,12 +201,15 @@
         // TssOptions
         struct TssOptions* tss_options(char* input_tss_share, int input_tss_index, struct KeyPoint* factor_pub, char* auth_signatures, char* selected_servers, int* new_tss_index, struct KeyPoint* new_factor_pub, int* error_code);
         void tss_options_free(struct TssOptions* ptr);
-        //NodeDetails
+        // NodeDetails
         struct NodeDetails* node_details(char* server_endpoints, char* server_public_keys, int server_threshold, int* error_code);
         void node_details_free(struct NodeDetails* ptr);
-        //RssComm
+        // RssComm
         struct FFIRSSComm* rss_comm(char* (*network_callback)(char*, char*, void*, int*), void* parent_instance_ref, int* error_code);
         void* rss_comm_free(struct FFIRssComm* ptr);
+        // ServerOpts
+        struct ServerOpts* server_opts(char* server_endpoints, char* server_pub_keys, int server_threshold, char* selected_servers, char* auth_signatures, int* error_code);
+        void* server_opts_free(struct ServerOpts* ptr);
     #ifdef __cplusplus
     } // extern "C"
     #endif
