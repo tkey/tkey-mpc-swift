@@ -114,7 +114,7 @@ public class ThresholdKey {
 
                 let curvePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: self.curveN).utf8String)
                 let ptr = withUnsafeMutablePointer(to: &device_index, { tssDeviceIndexPointer in withUnsafeMutablePointer(to: &errorCode, { error in
-                    threshold_key_initialize(self.pointer, sharePointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, curvePointer, use_tss, tssDeviceSharePointer, tssDeviceIndexPointer, tssFactorPubPointer, error) }) })
+                    threshold_key_initialize(self.pointer, sharePointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, false, curvePointer, use_tss, tssDeviceSharePointer, tssDeviceIndexPointer, tssFactorPubPointer, error) }) })
                 guard errorCode == 0 else {
                     throw RuntimeError("Error in ThresholdKey Initialize")
                 }
