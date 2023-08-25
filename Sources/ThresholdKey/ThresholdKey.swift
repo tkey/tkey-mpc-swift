@@ -84,7 +84,7 @@ public class ThresholdKey {
         return Metadata(pointer: result!)
     }
 
-    private func initialize(import_share: String?, input: ShareStore?, never_initialize_new_key: Bool?, include_local_metadata_transitions: Bool?, delete_1_of_1 : Bool = false, use_tss: Bool = false, device_tss_share: String?, device_tss_index: Int32?, tss_factor_pub: KeyPoint?, completion: @escaping (Result<KeyDetails, Error>) -> Void) {
+    private func initialize(import_share: String?, input: ShareStore?, never_initialize_new_key: Bool?, include_local_metadata_transitions: Bool?, use_tss: Bool = false, device_tss_share: String?, device_tss_index: Int32?, tss_factor_pub: KeyPoint?, completion: @escaping (Result<KeyDetails, Error>) -> Void) {
         tkeyQueue.async {
             do {
                 var errorCode: Int32 = -1
@@ -114,7 +114,7 @@ public class ThresholdKey {
 
                 let curvePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: self.curveN).utf8String)
                 let ptr = withUnsafeMutablePointer(to: &device_index, { tssDeviceIndexPointer in withUnsafeMutablePointer(to: &errorCode, { error in
-                    threshold_key_initialize(self.pointer, sharePointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, delete_1_of_1, curvePointer, use_tss, tssDeviceSharePointer, tssDeviceIndexPointer, tssFactorPubPointer, error) }) })
+                    threshold_key_initialize(self.pointer, sharePointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, false, curvePointer, use_tss, tssDeviceSharePointer, tssDeviceIndexPointer, tssFactorPubPointer, error) }) })
                 guard errorCode == 0 else {
                     throw RuntimeError("Error in ThresholdKey Initialize")
                 }
@@ -141,10 +141,10 @@ public class ThresholdKey {
     /// - Returns: `KeyDetails`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters.
-    public func initialize(import_share: String? = nil, input: ShareStore? = nil, never_initialize_new_key: Bool? = nil, include_local_metadata_transitions: Bool? = nil, delete_1_of_1: Bool = false, use_tss: Bool = false, device_tss_share: String? = nil, device_tss_index: Int32? = nil, tss_factor_pub: KeyPoint? = nil) async throws -> KeyDetails {
+    public func initialize(import_share: String? = nil, input: ShareStore? = nil, never_initialize_new_key: Bool? = nil, include_local_metadata_transitions: Bool? = nil, use_tss: Bool = false, device_tss_share: String? = nil, device_tss_index: Int32? = nil, tss_factor_pub: KeyPoint? = nil) async throws -> KeyDetails {
         return try await withCheckedThrowingContinuation {
             continuation in
-            self.initialize(import_share: import_share, input: input, never_initialize_new_key: never_initialize_new_key, include_local_metadata_transitions: include_local_metadata_transitions, delete_1_of_1: delete_1_of_1, use_tss: use_tss, device_tss_share: device_tss_share, device_tss_index: device_tss_index, tss_factor_pub: tss_factor_pub) {
+            self.initialize(import_share: import_share, input: input, never_initialize_new_key: never_initialize_new_key, include_local_metadata_transitions: include_local_metadata_transitions, use_tss: use_tss, device_tss_share: device_tss_share, device_tss_index: device_tss_index, tss_factor_pub: tss_factor_pub) {
                 result in
                 switch result {
                 case let .success(result):
