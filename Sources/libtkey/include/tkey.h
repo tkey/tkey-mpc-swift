@@ -85,6 +85,10 @@
         char* threshold_key_output_share(struct FFIThresholdKey* threshold_key, char* share_index, char* share_type, char* curve_n, int* error_code);
         char* threshold_key_get_tkey_store(struct FFIThresholdKey* threshold_key, char* module_name, int* error_code);
         char* threshold_key_get_tkey_store_item(struct FFIThresholdKey* threshold_key, char* module_name, char* identifier, int* error_code);
+        void threshold_key_set_general_store_domain(struct FFIThresholdKey* threshold_key, char* key, char* json_data, int* error_code);
+        char* threshold_key_get_general_store_domain(struct FFIThresholdKey* threshold_key, char* key, int* error_code);
+
+
         void threshold_key_input_share(struct FFIThresholdKey* threshold_key, char* share, char* share_type, char* curve_n, int* error_code);
         struct ShareStore* threshold_key_output_share_store(struct FFIThresholdKey* threshold_key, char* share_index, char* poly_id, char* curve_n, int* error_code);
         void threshold_key_input_share_store(struct FFIThresholdKey* threshold_key, struct ShareStore* share_store, int* error_code);

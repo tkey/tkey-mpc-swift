@@ -736,6 +736,56 @@ public class ThresholdKey {
         let json = try! JSONSerialization.jsonObject(with: string.data(using: .utf8)!, options: .allowFragments) as! [String: Any]
         return json
     }
+    
+    
+    /// set the general store domain.
+    ///
+    /// - Parameters:
+    ///   - key: key domain to be stored
+    ///   - data: json string data t be stored
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+    public func set_general_store_domain( key: String, data: String) throws {
+        var errorCode: Int32 = -1
+        let keyPointer = UnsafeMutablePointer<Int8>(mutating: (key as NSString).utf8String)
+
+        let dataPointer = UnsafeMutablePointer<Int8>(mutating: (data as NSString).utf8String)
+
+        withUnsafeMutablePointer(to: &errorCode, { error in
+            threshold_key_set_general_store_domain(pointer, keyPointer, dataPointer, error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey get_tkey_store_item")
+        }
+    }
+    
+    
+    
+    /// Returns the general store domain.
+    ///
+    /// - Parameters:
+    ///   - key: key domain stored
+    ///
+    /// - Returns: `String` json_string
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+    public func get_general_store_domain(key: String) throws -> String {
+        var errorCode: Int32 = -1
+        let keyPointer = UnsafeMutablePointer<Int8>(mutating: (key as NSString).utf8String)
+
+        let result = withUnsafeMutablePointer(to: &errorCode, { error in
+            threshold_key_get_general_store_domain(pointer, keyPointer, error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey get_tkey_store_item")
+        }
+        let string = String(cString: result!)
+        string_free(result)
+
+        return string
+//        let json = try! JSONSerialization.jsonObject(with: string.data(using: .utf8)!, options: .allowFragments) as! [String: Any]
+//        return json
+    }
 
     /// Returns all shares according to their mapping.
     ///
