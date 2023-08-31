@@ -40,7 +40,7 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         
         let factor = try? TssSecurityQuestionModule.getFactorKey(threshold: threshold_key, answer: answer, tag: "special")
         
-        XCTAssertEqual(factor, factor_key?.hex)
+        XCTAssertEqual(String(factor!.suffix(64)), factor_key!.hex)
         
     }
 }
