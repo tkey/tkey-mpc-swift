@@ -755,7 +755,7 @@ public class ThresholdKey {
             threshold_key_set_general_store_domain(pointer, keyPointer, dataPointer, error)
         })
         guard errorCode == 0 else {
-            throw RuntimeError("Error in ThresholdKey get_tkey_store_item")
+            throw RuntimeError("Error in ThresholdKey set_domain_store_item : error Code : \(errorCode)")
         }
     }
     
@@ -777,7 +777,7 @@ public class ThresholdKey {
             threshold_key_get_general_store_domain(pointer, keyPointer, error)
         })
         guard errorCode == 0 else {
-            throw RuntimeError("Error in ThresholdKey get_tkey_store_item")
+            throw RuntimeError("Error in ThresholdKey get_domain_store_item")
         }
         let string = String(cString: result!)
         string_free(result)

@@ -15,8 +15,20 @@ public struct TssSecurityQuestionData : Codable{
 // Security question has low entrophy, hence it is not recommended way to secure the factor key or share
 public final class TssSecurityQuestionModule {
     // set question
-    public static func setSecurityQuestion( threshold : ThresholdKey, factorKey :String, question: String, answer: String, description: String, tag: String) throws {
+    public static func set_security_question( threshold : ThresholdKey, factorKey :String, question: String, answer: String, description: String, tag: String) throws {
         //
+        let domainKey = TssSecurityQuestion + ":" + tag
+        
+        var isSet = false
+        do {
+            let question = try TssSecurityQuestionModule.get_question(threshold: threshold, tag: tag)
+            if question.count > 0 {
+                isSet = true
+            }
+        } catch {}
+        
+        if isSet {throw "Trying to set Security Question again"}
+        
         let factorBigInt = BigInt( sign: .plus, magnitude: BigUInt(Data(hex: factorKey)))
         guard let hash = answer.data(using: .utf8)?.sha3(.keccak256) else {
             throw "invalid answer format"
@@ -25,11 +37,11 @@ public final class TssSecurityQuestionModule {
         
         let nonceBigInt = factorBigInt - hashBigInt
         let nonce = nonceBigInt.serialize().toHexString()
+        print(nonce)
         
-        let domainKey = TssSecurityQuestion + ":" + tag
         // set to metadata using nonce, question, description, tag
         let data = TssSecurityQuestionData(nonce: nonce, question: question, description: description)
-        print(data)
+        
         let jsonData = try JSONEncoder().encode(data)
         guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
             throw "Invalid security question data"
@@ -38,13 +50,34 @@ public final class TssSecurityQuestionModule {
 
     }
     
+    public static func delete_security_question( threshold : ThresholdKey, tag: String) throws {
+        //
+        let domainKey = TssSecurityQuestion + ":" + tag
+        var isSet = false
+        do {
+            let question = try TssSecurityQuestionModule.get_question(threshold: threshold, tag: tag)
+            if question.count > 0 {
+                isSet = true
+            }
+        } catch {}
+        
+        if !isSet {throw "Security Question is not set"}
+        
+        let data : [String:String] = [:]
+        
+        let jsonData = try JSONEncoder().encode(data)
+        guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
+            throw "Invalid security question data"
+        }
+        try threshold.set_general_store_domain(key: domainKey, data: jsonStr )
+    }
+    
     // get question
-    public static func getSecurityQuestion( threshold: ThresholdKey,  tag: String ) throws -> String {
+    public static func get_question( threshold: ThresholdKey,  tag: String ) throws -> String {
         // get data format from json
         let domainKey = TssSecurityQuestion + ":" + tag
         
         let jsonStr = try threshold.get_general_store_domain(key: domainKey)
-        print(jsonStr)
         guard let data = jsonStr.data(using: .utf8) else {
             throw "invalid security question data"
         }
@@ -54,7 +87,7 @@ public final class TssSecurityQuestionModule {
     }
     
     // getFactorKey
-    public static func getFactorKey ( threshold: ThresholdKey, answer: String , tag: String ) throws -> String {
+    public static func get_factor_key ( threshold: ThresholdKey, answer: String , tag: String ) throws -> String {
         // get data format from json
         let domainKey = TssSecurityQuestion + ":" + tag
         
@@ -78,4 +111,13 @@ public final class TssSecurityQuestionModule {
         
         return factorkeyBigInt.serialize().toHexString()
     }
+    
+    
+    public static func input_share ( threshold :ThresholdKey, answer: String, tag: String) async throws -> String {
+        let factorKey = try TssSecurityQuestionModule.get_factor_key(threshold: threshold, answer: answer, tag: tag)
+        
+        try await threshold.input_factor_key(factorKey: factorKey)
+        return factorKey
+    }
+    
 }
