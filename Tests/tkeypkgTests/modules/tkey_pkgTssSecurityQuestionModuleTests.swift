@@ -28,6 +28,7 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
     func test() async throws {
         let key_reconstruction_details = try! await threshold_key.reconstruct()
         let question = "favorite marvel character"
+        let question2 = "favorite villian character"
         let answer = "iron man"
         let answer_2 = "captain america"
         let factor_key = try? PrivateKey.generate()
@@ -58,5 +59,28 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         
         XCTAssertEqual(String(factor.suffix(64)), factor_key!.hex)
         
+        
+        // delete security question and add new security question
+        try TssSecurityQuestionModule.delete_security_question(threshold: threshold_key, tag: "special")
+        do {
+            try TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
+            XCTFail("Should not able get question after delete")
+        }catch{}
+        
+        try TssSecurityQuestionModule.set_security_question(threshold: threshold_key, factorKey: factor_key!.hex, question: question2, answer: answer_2, description: "", tag: "special")
+        
+        let questionReturn2 = try TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
+        XCTAssertEqual(questionReturn2, question2)
+        
+        let factor2 = try TssSecurityQuestionModule.get_factor_key(threshold: threshold_key, answer: answer_2, tag: "special")
+        
+        let factor21 = try await TssSecurityQuestionModule.input_share(threshold: threshold_key, answer: answer_2, tag: "special")
+        do {
+            let factor = try await TssSecurityQuestionModule.input_share(threshold: threshold_key, answer: answer, tag: "special")
+            XCTFail("Should be able to get factor using incorrect answer")
+        } catch {}
+        
+        
+        XCTAssertEqual(String(factor21.suffix(64)), factor_key!.hex)
     }
 }
