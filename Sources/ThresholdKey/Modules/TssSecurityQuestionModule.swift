@@ -9,12 +9,23 @@ let TssSecurityQuestion = "TssSecurityQuestion"
 public struct TssSecurityQuestionData : Codable{
     let nonce: String
     let question: String
+    let factorPub: String
     let description: String
 }
 
 // Security question has low entrophy, hence it is not recommended way to secure the factor key or share
 public final class TssSecurityQuestionModule {
-    // set question
+    
+    /// set security question
+    /// - Parameters:
+    ///   - threshold_key: The threshold key to act on.
+    ///   - question: The security question.
+    ///   - answer: The answer for the security question.
+    ///
+    /// - Returns: `` object.
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
+    //
     public static func set_security_question( threshold : ThresholdKey, factorKey :String, question: String, answer: String, description: String, tag: String) throws {
         //
         let domainKey = TssSecurityQuestion + ":" + tag
@@ -37,10 +48,10 @@ public final class TssSecurityQuestionModule {
         
         let nonceBigInt = factorBigInt - hashBigInt
         let nonce = nonceBigInt.serialize().toHexString()
-        print(nonce)
         
+        let factorPub = try PrivateKey(hex: factorKey).toPublic(format: .EllipticCompress)
         // set to metadata using nonce, question, description, tag
-        let data = TssSecurityQuestionData(nonce: nonce, question: question, description: description)
+        let data = TssSecurityQuestionData(nonce: nonce, question: question, factorPub: factorPub, description: description)
         
         let jsonData = try JSONEncoder().encode(data)
         guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
@@ -50,26 +61,31 @@ public final class TssSecurityQuestionModule {
 
     }
     
-    public static func delete_security_question( threshold : ThresholdKey, tag: String) throws {
+    public static func delete_security_question( threshold : ThresholdKey, tag: String) throws -> String {
         //
         let domainKey = TssSecurityQuestion + ":" + tag
         var isSet = false
-        do {
-            let question = try TssSecurityQuestionModule.get_question(threshold: threshold, tag: tag)
-            if question.count > 0 {
-                isSet = true
-            }
-        } catch {}
+        
+        let jsonStr = try threshold.get_general_store_domain(key: domainKey)
+        guard let data = jsonStr.data(using: .utf8) else {
+            throw "invalid security question data"
+        }
+        let jsonObj = try JSONDecoder().decode( TssSecurityQuestionData.self, from: data)
+        if jsonObj.question.count > 0 {
+            isSet = true
+        }
+        let factorPub = jsonObj.factorPub
         
         if !isSet {throw "Security Question is not set"}
         
-        let data : [String:String] = [:]
+        let emptyData : [String:String] = [:]
         
-        let jsonData = try JSONEncoder().encode(data)
+        let jsonData = try JSONEncoder().encode(emptyData)
         guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
             throw "Invalid security question data"
         }
         try threshold.set_general_store_domain(key: domainKey, data: jsonStr )
+        return factorPub
     }
     
     // get question
@@ -85,7 +101,7 @@ public final class TssSecurityQuestionModule {
         
         return jsonObj.question
     }
-    
+            
     // getFactorKey
     public static func get_factor_key ( threshold: ThresholdKey, answer: String , tag: String ) throws -> String {
         // get data format from json
