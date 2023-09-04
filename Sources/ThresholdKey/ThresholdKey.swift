@@ -1078,6 +1078,12 @@ public class ThresholdKey {
         }
     }
 
+    
+    /// Function to get all tss tags
+    ///
+    /// - Parameters:
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
     public func get_all_tss_tags() throws -> [String] {
         var errorCode: Int32 = -1
 
@@ -1097,7 +1103,12 @@ public class ThresholdKey {
 
         return result_vec
     }
-
+    
+    /// Function to get extended verifier id
+    ///
+    /// - Parameters:
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
     public func get_extended_verifier_id() throws -> String {
         var errorCode: Int32 = -1
 
