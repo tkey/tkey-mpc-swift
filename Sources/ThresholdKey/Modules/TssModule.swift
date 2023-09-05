@@ -43,6 +43,7 @@ public final class TssModule {
     /// set `active` tss's tag
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
+    ///   - tss_tag: tss key's tag.   
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     static func set_tss_tag(threshold_key: ThresholdKey, tss_tag: String) async throws {
@@ -108,12 +109,11 @@ public final class TssModule {
         return result_vec
     }
     
-    /// get current tss nonce
+    /// get all factor public keys of tagged tss key
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
     ///   - tss_tag: tss key's tag.
     ///   - prefetch: public key of the new factor that added (registered)
-    ///   - threshold:
     ///
     /// - Returns: `nonce (Int32)`
     ///
@@ -168,7 +168,6 @@ public final class TssModule {
     ///   - threshold_key: The threshold key to act on.
     ///   - tss_tag: tss key's tag.
     ///   - prefetch: public key of the new factor that added (registered)
-    ///   - threshold:
     ///
     /// - Returns: `nonce (Int32)`
     ///
@@ -196,7 +195,7 @@ public final class TssModule {
     ///   - factorKey: public key of the new factor that added (registered)
     ///   - threshold:
     ///
-    /// - Returns:  `(tss_index, tss_share)` (String, String)
+    /// - Returns: `(String, String)` (tss_index, tss_share)
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func get_tss_share(threshold_key: ThresholdKey, tss_tag: String, factorKey: String, threshold: Int32 = 0) async throws -> (String, String) {
@@ -351,7 +350,7 @@ public final class TssModule {
     ///   - tss_index: tss_index that should match with existing factor key's tss_index
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
-    public static func copy_factor_pub(threshold_key: ThresholdKey, tss_tag: String, factorKey: String, newFactorPub: String, tss_index: Int32, threshold: Int32 = 0) async throws {
+    public static func copy_factor_pub(threshold_key: ThresholdKey, tss_tag: String, factorKey: String, newFactorPub: String, tss_index: Int32 ) async throws {
         if factorKey.count > 66 { throw RuntimeError("Invalid factor Key") }
         try await TssModule.set_tss_tag(threshold_key: threshold_key, tss_tag: tss_tag)
 
@@ -484,6 +483,9 @@ public final class TssModule {
     ///   - auth_signatures: signature data that need to be validated by signing server .
     ///   - new_factor_pub: public key of the new factor that added (registered)
     ///   - new_tss_index: tss_index of the new tss share (to be registered)
+    ///   - selected_servers: node indexes of the server that will be communicated to
+    ///   - nodeDetails: node details
+    ///   - torusUtils: torus utils
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func add_factor_pub(threshold_key: ThresholdKey, tss_tag: String, factor_key: String, auth_signatures: [String], new_factor_pub: String, new_tss_index: Int32, selected_servers: [Int32]? = nil, nodeDetails: AllNodeDetailsModel, torusUtils: TorusUtils) async throws {
@@ -502,6 +504,9 @@ public final class TssModule {
     ///   - factor_key: valid factor key that needed to execute this operation.
     ///   - auth_signatures: signature data that need to be validated by signing server .
     ///   - delete_factor_pub: public key of the factor that need to be deleted.
+    ///   - nodeDetails: node details
+    ///   - torusUtils: torus utils
+    ///   - selected_servers: node indexes of the server that will be communicated to
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func delete_factor_pub(threshold_key: ThresholdKey, tss_tag: String, factor_key: String, auth_signatures: [String], delete_factor_pub: String, nodeDetails: AllNodeDetailsModel, torusUtils: TorusUtils, selected_servers: [Int32]? = nil) async throws {
