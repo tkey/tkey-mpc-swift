@@ -3,15 +3,6 @@ import Foundation
     import lib
 #endif
 
-/*
-extension NSMutableData {
-    func appendString(_ string: String) {
-        if let data = string.data(using: .utf8) {
-            append(data)
-        }
-    }
-}
-*/
 
 public final class StorageLayer {
     private(set) var pointer: OpaquePointer?
@@ -20,21 +11,6 @@ public final class StorageLayer {
     // tracking this object is not necessary in swift as it maintains context
     // on entry for the callback
     private var obj_ref: UnsafeMutableRawPointer?
-
-    /* for multipart form data
-    static func createMultipartBody(data: Data, boundary: String, file: String) -> Data {
-          let body = NSMutableData()
-          let lineBreak = "\r\n"
-          let boundaryPrefix = "--\(boundary)\r\n"
-          body.appendString(boundaryPrefix)
-          body.appendString("Content-Disposition: form-data; name=\"\(file)\"\r\n")
-          body.appendString("Content-Type: \("application/json;charset=utf-8")\r\n\r\n")
-          body.append(data)
-          body.appendString("\r\n")
-          body.appendString("--\(boundary)--\(lineBreak)")
-          return body as Data
-      }
-     */
 
     private static func percentEscapeString( string: String ) -> String {
       var characterSet = CharacterSet.alphanumerics
