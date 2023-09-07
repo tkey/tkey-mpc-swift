@@ -162,7 +162,9 @@ public class ThresholdKey {
         }
     }
 
-    /// Reconstructs the private key, this assumes that the number of shares inserted into the `ThrehsoldKey` are equal or greater than the threshold.
+    /// Reconstructs the private key, this assumes that the number of shares inserted into the `ThresholdKey` are equal or greater than the threshold.
+    ///
+    /// - Returns: `KeyReconstructionDetails`
     ///
     /// - Throws: `RuntimeError`.
     public func reconstruct() async throws -> KeyReconstructionDetails {
@@ -239,9 +241,7 @@ public class ThresholdKey {
 
     /// Generates a new share.
     ///
-    /// - Parameters:
-    ///
-    /// - Returns: `GenerateShareStoreArray`
+    /// - Returns: `GenerateShareStoreResult`
     ///
     /// - Throws: `RuntimeError`, indicates invalid `ThresholdKey`.
     public func generate_new_share() async throws -> GenerateShareStoreResult {
@@ -556,7 +556,7 @@ public class ThresholdKey {
     
     /// Retrieves all share indexes for a `ThresholdKey`.
     ///
-    /// - Returns: Array of `String`
+    /// - Returns: Array of String
     ///
     /// - Throws: `RuntimeError`, indicates invalid `ThresholdKey`.
     public func get_shares_indexes() throws -> [String] {
@@ -1047,6 +1047,14 @@ public class ThresholdKey {
         }
     }
 
+    /// Function to assign a public key to the service provider, used only for TSS
+    ///
+    /// - Parameters:
+    ///   - tag: The tss tag
+    ///   - nonce: The tss nonce
+    ///   - public_key: The pulic key to be assigned
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
     public func service_provider_assign_public_key(tag: String, nonce: String, public_key: String) throws {
         var errorCode: Int32 = -1
         let tagPointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: tag).utf8String)
@@ -1058,6 +1066,12 @@ public class ThresholdKey {
         }
     }
 
+    
+    /// Function to get all tss tags
+    ///
+    /// - Returns: Array of String
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
     public func get_all_tss_tags() throws -> [String] {
         var errorCode: Int32 = -1
 
@@ -1077,7 +1091,12 @@ public class ThresholdKey {
 
         return result_vec
     }
-
+    
+    /// Function to get extended verifier id
+    ///
+    /// - Returns: String
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
     public func get_extended_verifier_id() throws -> String {
         var errorCode: Int32 = -1
 
