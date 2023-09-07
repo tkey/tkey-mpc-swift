@@ -41,7 +41,7 @@ final class integrationTests: XCTestCase {
         _ = try! await threshold.initialize()
         _ = try! await threshold.reconstruct()
         let shareIndex = try! await threshold.generate_new_share()
-        let share = try threshold.output_share(shareIndex: shareIndex.hex)
+        let _ = try threshold.output_share(shareIndex: shareIndex.hex)
 
         let tssTag = "testing"
         let factorKey = try PrivateKey.generate()
