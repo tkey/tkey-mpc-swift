@@ -84,19 +84,16 @@ public class ThresholdKey {
         return Metadata(pointer: result!)
     }
 
-    private func initialize(import_share: String?, input: ShareStore?, never_initialize_new_key: Bool?, include_local_metadata_transitions: Bool?, completion: @escaping (Result<KeyDetails, Error>) -> Void) {
+    private func initialize(import_metdata_key: String?, input: ShareStore?, never_initialize_new_key: Bool?, include_local_metadata_transitions: Bool?, completion: @escaping (Result<KeyDetails, Error>) -> Void) {
         tkeyQueue.async {
             do {
                 var errorCode: Int32 = -1
-                var sharePointer: UnsafeMutablePointer<Int8>?
-                // use default value for now
-                var tssDeviceSharePointer: UnsafeMutablePointer<Int8>?
-                var tssFactorPubPointer: OpaquePointer?
+                var keyPointer: UnsafeMutablePointer<Int8>?
                 var device_index: Int32 = 2
                 let useTss = false
                 
-                if import_share != nil {
-                    sharePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: import_share!).utf8String)
+                if import_metdata_key != nil {
+                    keyPointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: import_metdata_key!).utf8String)
                 }
 
                 var storePtr: OpaquePointer?
@@ -109,7 +106,7 @@ public class ThresholdKey {
 
                 let curvePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: self.curveN).utf8String)
                 let ptr = withUnsafeMutablePointer(to: &device_index, { tssDeviceIndexPointer in withUnsafeMutablePointer(to: &errorCode, { error in
-                    threshold_key_initialize(self.pointer, sharePointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, curvePointer, useTss, tssDeviceSharePointer, tssDeviceIndexPointer, tssFactorPubPointer, error) }) })
+                    threshold_key_initialize(self.pointer, keyPointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, curvePointer, useTss, nil, tssDeviceIndexPointer, nil, error) }) })
                 guard errorCode == 0 else {
                     throw RuntimeError("Error in ThresholdKey Initialize")
                 }
@@ -124,7 +121,7 @@ public class ThresholdKey {
     /// Initializes a `ThresholdKey` object.
     ///
     /// - Parameters:
-    ///   - import_share: Share to be imported, optional.
+    ///   - import_metdata_key: Metadata key to be imported, optional.
     ///   - input: `ShareStore` to be used, optional.
     ///   - never_initialize_new_key: Do not initialize a new tKey if an existing one is found.
     ///   - include_local_matadata_transitions: Proritize existing metadata transitions over cloud fetched transitions.
@@ -132,10 +129,10 @@ public class ThresholdKey {
     /// - Returns: `KeyDetails`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters.
-    public func initialize(import_share: String? = nil, input: ShareStore? = nil, never_initialize_new_key: Bool? = nil, include_local_metadata_transitions: Bool? = nil ) async throws -> KeyDetails {
+    public func initialize(import_metdata_key: String? = nil, input: ShareStore? = nil, never_initialize_new_key: Bool? = nil, include_local_metadata_transitions: Bool? = nil ) async throws -> KeyDetails {
         return try await withCheckedThrowingContinuation {
             continuation in
-            self.initialize(import_share: import_share, input: input, never_initialize_new_key: never_initialize_new_key, include_local_metadata_transitions: include_local_metadata_transitions ) {
+            self.initialize(import_metdata_key: import_metdata_key, input: input, never_initialize_new_key: never_initialize_new_key, include_local_metadata_transitions: include_local_metadata_transitions ) {
                 result in
                 switch result {
                 case let .success(result):
@@ -222,12 +219,11 @@ public class ThresholdKey {
         tkeyQueue.async {
             do {
                 let useTss = false
-                var options: OpaquePointer?
 
                 var errorCode: Int32 = -1
                 let curvePointer = UnsafeMutablePointer<Int8>(mutating: (self.curveN as NSString).utf8String)
                 let ptr = withUnsafeMutablePointer(to: &errorCode, { error in
-                    threshold_key_generate_share(self.pointer, curvePointer, useTss, options, error)
+                    threshold_key_generate_share(self.pointer, curvePointer, useTss, nil, error)
                 })
                 guard errorCode == 0 else {
                     throw RuntimeError("Error in ThresholdKey generate_new_share")
@@ -270,10 +266,9 @@ public class ThresholdKey {
                 let shareIndexPointer = UnsafeMutablePointer<Int8>(mutating: (share_index as NSString).utf8String)
 
                 let useTss = false
-                var options: OpaquePointer?
 
                 withUnsafeMutablePointer(to: &errorCode, { error in
-                    threshold_key_delete_share(self.pointer, shareIndexPointer, curvePointer, useTss, options, error)
+                    threshold_key_delete_share(self.pointer, shareIndexPointer, curvePointer, useTss, nil, error)
                 })
                 guard errorCode == 0 else {
                     throw RuntimeError("Error in Threshold while Deleting share")
