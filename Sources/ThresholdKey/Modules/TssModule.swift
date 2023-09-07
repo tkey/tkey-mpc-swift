@@ -8,7 +8,7 @@ import CommonSources
 import FetchNodeDetails
 import TorusUtils
 
-public struct GetTSSPubKeyResult: Codable {
+public struct TSSPubKeyResult: Codable {
     public struct Point: Codable {
         public var x: String
         public var y: String
@@ -39,11 +39,11 @@ public final class TssModule {
             }
         }
     }
-    
-    /// set `active` tss's tag
+
+    /// Set the active tss tag
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
-    ///   - tss_tag: tss key's tag.   
+    ///   - tss_tag: The tss tag to be set.
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     static func set_tss_tag(threshold_key: ThresholdKey, tss_tag: String) async throws {
@@ -61,8 +61,7 @@ public final class TssModule {
         }
     }
 
-    
-    /// get current `active` tss's tag
+    /// Returns the current active tss tag
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
     ///
@@ -81,12 +80,11 @@ public final class TssModule {
         return string
     }
 
-    
-    /// get all tss tags in metadata
+    /// Get all tss tags in the metadata
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
     ///
-    /// - Returns: `[String]`
+    /// - Returns: Array of String
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func get_all_tss_tags(threshold_key: ThresholdKey) throws -> [String] {
@@ -108,14 +106,13 @@ public final class TssModule {
 
         return result_vec
     }
-    
-    /// get all factor public keys of tagged tss key
+
+    /// Returns all factor public keys for tagged tss key
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
-    ///   - tss_tag: tss key's tag.
-    ///   - prefetch: public key of the new factor that added (registered)
+    ///   - tss_tag: The tss tag.
     ///
-    /// - Returns: `nonce (Int32)`
+    /// - Returns: Array of String
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func get_all_factor_pub(threshold_key: ThresholdKey, tss_tag: String) async throws -> [String] {
@@ -139,13 +136,13 @@ public final class TssModule {
 
         return result_vec
     }
-    
-    /// get tagged final tss public key
+
+    /// Returns the tagged final tss public key
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
-    ///   - tss_tag: tss key's tag.
+    ///   - tss_tag: The tss tag
     ///
-    /// - Returns: `Tss Public Key (String)`
+    /// - Returns: `String`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func get_tss_pub_key(threshold_key: ThresholdKey, tss_tag: String) async throws -> String {
@@ -162,14 +159,14 @@ public final class TssModule {
         string_free(result)
         return string
     }
-    
-    /// get tss nonce
+
+    /// Returns the tagged tss nonce
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
-    ///   - tss_tag: tss key's tag.
-    ///   - prefetch: public key of the new factor that added (registered)
+    ///   - tss_tag: The tss tag.
+    ///   - prefetch: Fetch the next nonce's pub key
     ///
-    /// - Returns: `nonce (Int32)`
+    /// - Returns: `Int32`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func get_tss_nonce(threshold_key: ThresholdKey, tss_tag: String, prefetch: Bool = false) throws -> Int32 {
@@ -187,15 +184,15 @@ public final class TssModule {
 
         return nonce
     }
-    
-    /// get latest tss share registed to the factor key
+
+    /// Returns latest tss index and tss share registed to the factor key
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
-    ///   - tss_tag: tss key's tag.
-    ///   - factorKey: public key of the new factor that added (registered)
-    ///   - threshold:
+    ///   - tss_tag: The tss tag.
+    ///   - factorKey: Public key of the new factor that was previously added
+    ///   - threshold: The threshold
     ///
-    /// - Returns: `(String, String)` (tss_index, tss_share)
+    /// - Returns: `(String, String)`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func get_tss_share(threshold_key: ThresholdKey, tss_tag: String, factorKey: String, threshold: Int32 = 0) async throws -> (String, String) {
@@ -244,12 +241,11 @@ public final class TssModule {
         }
     }
 
-
-    /// initialize new tagged tss key and create the tss share
+    /// Initialize new tagged tss key and create the tss share
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
     ///   - tss_tag: tss key's tag.
-    ///   - deviceTssShare : specific value that will be tss share of the final tss key. (Optional) *note: after tss refresh (add factor pub or delete factor pub) current tss share will be invalidated*
+    ///   - deviceTssShare : specific value that will be tss share of the final tss key, optional. *note: after tss refresh (add factor pub or delete factor pub) current tss share will be invalidated*
     ///   - factorPub: public key of the new factor that added (registered)
     ///   - deviceTssIndex: Tss Index of tss share should be associated
     ///   - nodeDetails: nodeDetails that sdk should comunicate to
@@ -284,13 +280,13 @@ public final class TssModule {
         }
     }
 
-    ///  get and update latest dkg tss_pub_key with latest nonce
+    ///  Get and update latest dkg tss_pub_key with latest nonce
     /// - Parameters:
-    ///   - threshold_key: The threshold key to act on.
-    ///   - tss_tag: tss key's tag.
-    ///   - nodeDetails: nodeDetails that sdk should comunicate to
-    ///   - torusUtils: torusUtils used to retrieve dkg tss pub key
-    ///   - prefetch: fetch the next nonce's pub key
+    ///    - threshold_key: The threshold key to act on
+    ///    - tss_tag: The tss tag.
+    ///    - nodeDetails: nodeDetails that sdk should comunicate to
+    ///    - torusUtils: torusUtils used to retrieve dkg tss pub key
+    ///    - prefetch: Fetch the next nonce's pub key
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func update_tss_pub_key(threshold_key: ThresholdKey, tss_tag: String, nodeDetails: AllNodeDetailsModel, torusUtils: TorusUtils, prefetch: Bool = false) async throws {
@@ -340,17 +336,17 @@ public final class TssModule {
         }
     }
 
-    /// copy tss share from existing factor to new factor key (register)
+    /// Copy tss share from existing factor to new factor key (register)
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
-    ///   - tss_tag: tss key's tag.
-    ///   - factor_key: valid factor key that needed to execute this operation.
-    ///   - auth_signatures: signature data that need to be validated by signing server .
-    ///   - new_factor_pub: public key of the new factor that added (registered)
+    ///   - tss_tag: The tss tah.
+    ///   - factor_key: Valid factor key that needed to execute this operation.
+    ///   - auth_signatures: Signature data that need to be validated by signing server .
+    ///   - new_factor_pub: Public key of the new factor that added (registered)
     ///   - tss_index: tss_index that should match with existing factor key's tss_index
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
-    public static func copy_factor_pub(threshold_key: ThresholdKey, tss_tag: String, factorKey: String, newFactorPub: String, tss_index: Int32 ) async throws {
+    public static func copy_factor_pub(threshold_key: ThresholdKey, tss_tag: String, factorKey: String, newFactorPub: String, tss_index: Int32) async throws {
         if factorKey.count > 66 { throw RuntimeError("Invalid factor Key") }
         try await TssModule.set_tss_tag(threshold_key: threshold_key, tss_tag: tss_tag)
 
@@ -421,7 +417,7 @@ public final class TssModule {
             }
         }
     }
-
+    
     private static func delete_tss_share(threshold_key: ThresholdKey, input_tss_share: String, tss_input_index: Int32, auth_signatures: [String], delete_factor_pub: String, selected_servers: [Int32]? = nil, completion: @escaping (Result<Void, Error>) -> Void) {
         threshold_key.tkeyQueue.async {
             do {
@@ -475,7 +471,7 @@ public final class TssModule {
         }
     }
 
-    /// generate tss_index's share and register to new factor key
+    /// Generate tss_index's share and register to new factor key
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
     ///   - tss_tag: tss key's tag.
@@ -494,10 +490,9 @@ public final class TssModule {
 
         let (tss_index, tss_share) = try await get_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, factorKey: factor_key)
         try await TssModule.generate_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, input_tss_share: tss_share, tss_input_index: Int32(tss_index)!, auth_signatures: auth_signatures, new_factor_pub: new_factor_pub, new_tss_index: new_tss_index, nodeDetails: nodeDetails, torusUtils: torusUtils, selected_servers: selected_servers)
-        
     }
 
-    /// delete factor pub from tss metadata
+    /// Delete factor pub from tss metadata
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
     ///   - tss_tag: tss key's tag.
@@ -516,9 +511,8 @@ public final class TssModule {
         let (tss_index, tss_share) = try await get_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, factorKey: factor_key)
         try await TssModule.delete_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, input_tss_share: tss_share, tss_input_index: Int32(tss_index)!, auth_signatures: auth_signatures, delete_factor_pub: delete_factor_pub, nodeDetails: nodeDetails, torusUtils: torusUtils, selected_servers: selected_servers)
     }
-    
-    
-    /// backup device share with factor key  
+
+    /// Backup device share with factor key
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
     ///   - shareIndex: Index of the Share to be backed up.
@@ -531,27 +525,25 @@ public final class TssModule {
         let cShareIndex = UnsafeMutablePointer<Int8>(mutating: (shareIndex as NSString).utf8String)
         let cFactorKey = UnsafeMutablePointer<Int8>(mutating: (factorKey as NSString).utf8String)
         let curvePointer = UnsafeMutablePointer<Int8>(mutating: (threshold_key.curveN as NSString).utf8String)
-        
-        withUnsafeMutablePointer(to: &errorCode, { error in threshold_key_backup_share_with_factor_key( threshold_key.pointer, cShareIndex, cFactorKey, curvePointer, error)})
-         guard errorCode == 0 else {
-             throw RuntimeError("Error in ThresholdKey backup_share_with_factor_key")
-         }
+
+        withUnsafeMutablePointer(to: &errorCode, { error in threshold_key_backup_share_with_factor_key(threshold_key.pointer, cShareIndex, cFactorKey, curvePointer, error) })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey backup_share_with_factor_key")
+        }
     }
 
-    
-    
-    /// find the metadata share Index registred with factor_key
+    /// Find the metadata share Index registred with factor_key
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
-    ///   - factorKey: factor key to be used.
+    ///   - factor_key: factor key to be used.
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
-    public static func find_device_share_index ( threshold_key: ThresholdKey, factor_key: String ) async throws -> String {
+    public static func find_device_share_index(threshold_key: ThresholdKey, factor_key: String) async throws -> String {
         let result = try await threshold_key.storage_layer_get_metadata(private_key: factor_key)
         guard let resultData = result.data(using: .utf8) else {
             throw "Invalid factor key"
         }
-        guard let resultJson = try JSONSerialization.jsonObject(with: resultData ) as? [String: Any] else {
+        guard let resultJson = try JSONSerialization.jsonObject(with: resultData) as? [String: Any] else {
             throw "Invalid factor key"
         }
         guard let deviceShareJson = resultJson["deviceShare"] as? [String: Any] else {
@@ -565,18 +557,18 @@ public final class TssModule {
         }
         return shareIndex
     }
-    
-    /// Function to get dkg public key needed
+
+    /// Function to get dkg public key
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
     ///   - tssTag: tssTag used.
-    ///   - nonce: nonce 
+    ///   - nonce: nonce
     ///   - nodeDetails: node details
     ///   - torusUtils: torus utils
-    /// - Returns: `GetTSSPubKeyResult`
+    /// - Returns: `TSSPubKeyResult`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
-    public static func get_dkg_pub_key(threshold_key: ThresholdKey, tssTag: String, nonce: String, nodeDetails: AllNodeDetailsModel, torusUtils: TorusUtils) async throws -> GetTSSPubKeyResult {
+    public static func get_dkg_pub_key(threshold_key: ThresholdKey, tssTag: String, nonce: String, nodeDetails: AllNodeDetailsModel, torusUtils: TorusUtils) async throws -> TSSPubKeyResult {
         let extendedVerifierId = try threshold_key.get_extended_verifier_id()
         let split = extendedVerifierId.components(separatedBy: "\u{001c}")
 
@@ -585,7 +577,7 @@ public final class TssModule {
         guard let x = result.finalKeyData?.X, let y = result.finalKeyData?.Y, let nodeIndexes = result.nodesData?.nodeIndexes else {
             throw RuntimeError("conversion error")
         }
-        let pubKey = GetTSSPubKeyResult.Point(x: x, y: y)
-        return GetTSSPubKeyResult(publicKey: pubKey, nodeIndexes: nodeIndexes)
+        let pubKey = TSSPubKeyResult.Point(x: x, y: y)
+        return TSSPubKeyResult(publicKey: pubKey, nodeIndexes: nodeIndexes)
     }
 }
