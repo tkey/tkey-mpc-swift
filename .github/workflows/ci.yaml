@@ -1,8 +1,8 @@
 on:
   push:
     branches:
-      - master
-      - v2
+      - main
+      - alpha
   pull_request:
     types:
       - opened

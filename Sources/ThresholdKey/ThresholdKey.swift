@@ -84,24 +84,16 @@ public class ThresholdKey {
         return Metadata(pointer: result!)
     }
 
-    private func initialize(import_share: String?, input: ShareStore?, never_initialize_new_key: Bool?, include_local_metadata_transitions: Bool?, use_tss: Bool = false, device_tss_share: String?, device_tss_index: Int32?, tss_factor_pub: KeyPoint?, completion: @escaping (Result<KeyDetails, Error>) -> Void) {
+    private func initialize(import_metdata_key: String?, input: ShareStore?, never_initialize_new_key: Bool?, include_local_metadata_transitions: Bool?, completion: @escaping (Result<KeyDetails, Error>) -> Void) {
         tkeyQueue.async {
             do {
                 var errorCode: Int32 = -1
-                var sharePointer: UnsafeMutablePointer<Int8>?
-                var tssDeviceSharePointer: UnsafeMutablePointer<Int8>?
-                var tssFactorPubPointer: OpaquePointer?
-                var device_index: Int32 = device_tss_index ?? 2
-                if import_share != nil {
-                    sharePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: import_share!).utf8String)
-                }
-
-                if device_tss_share != nil {
-                    tssDeviceSharePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: device_tss_share!).utf8String)
-                }
-
-                if tss_factor_pub != nil {
-                    tssFactorPubPointer = tss_factor_pub!.pointer
+                var keyPointer: UnsafeMutablePointer<Int8>?
+                var device_index: Int32 = 2
+                let useTss = false
+                
+                if import_metdata_key != nil {
+                    keyPointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: import_metdata_key!).utf8String)
                 }
 
                 var storePtr: OpaquePointer?
@@ -114,7 +106,7 @@ public class ThresholdKey {
 
                 let curvePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: self.curveN).utf8String)
                 let ptr = withUnsafeMutablePointer(to: &device_index, { tssDeviceIndexPointer in withUnsafeMutablePointer(to: &errorCode, { error in
-                    threshold_key_initialize(self.pointer, sharePointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, curvePointer, use_tss, tssDeviceSharePointer, tssDeviceIndexPointer, tssFactorPubPointer, error) }) })
+                    threshold_key_initialize(self.pointer, keyPointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, false,  curvePointer, useTss, nil, tssDeviceIndexPointer, nil, error) }) })
                 guard errorCode == 0 else {
                     throw RuntimeError("Error in ThresholdKey Initialize")
                 }
@@ -129,22 +121,18 @@ public class ThresholdKey {
     /// Initializes a `ThresholdKey` object.
     ///
     /// - Parameters:
-    ///   - import_share: Share to be imported, optional.
+    ///   - import_metdata_key: Metadata key to be imported, optional.
     ///   - input: `ShareStore` to be used, optional.
     ///   - never_initialize_new_key: Do not initialize a new tKey if an existing one is found.
     ///   - include_local_matadata_transitions: Proritize existing metadata transitions over cloud fetched transitions.
-    ///   - use_tss: Whether TSS is used or not.
-    ///   - device_tss_share: Device share for TSS, optional
-    ///   - device_tss_index: Device index for TSS, optional
-    ///   - tss_factor_pub: Factor Key for TSS, optional
     ///
     /// - Returns: `KeyDetails`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters.
-    public func initialize(import_share: String? = nil, input: ShareStore? = nil, never_initialize_new_key: Bool? = nil, include_local_metadata_transitions: Bool? = nil, use_tss: Bool = false, device_tss_share: String? = nil, device_tss_index: Int32? = nil, tss_factor_pub: KeyPoint? = nil) async throws -> KeyDetails {
+    public func initialize(import_metdata_key: String? = nil, input: ShareStore? = nil, never_initialize_new_key: Bool? = nil, include_local_metadata_transitions: Bool? = nil ) async throws -> KeyDetails {
         return try await withCheckedThrowingContinuation {
             continuation in
-            self.initialize(import_share: import_share, input: input, never_initialize_new_key: never_initialize_new_key, include_local_metadata_transitions: include_local_metadata_transitions, use_tss: use_tss, device_tss_share: device_tss_share, device_tss_index: device_tss_index, tss_factor_pub: tss_factor_pub) {
+            self.initialize(import_metdata_key: import_metdata_key, input: input, never_initialize_new_key: never_initialize_new_key, include_local_metadata_transitions: include_local_metadata_transitions ) {
                 result in
                 switch result {
                 case let .success(result):
@@ -174,7 +162,9 @@ public class ThresholdKey {
         }
     }
 
-    /// Reconstructs the private key, this assumes that the number of shares inserted into the `ThrehsoldKey` are equal or greater than the threshold.
+    /// Reconstructs the private key, this assumes that the number of shares inserted into the `ThresholdKey` are equal or greater than the threshold.
+    ///
+    /// - Returns: `KeyReconstructionDetails`
     ///
     /// - Throws: `RuntimeError`.
     public func reconstruct() async throws -> KeyReconstructionDetails {
@@ -227,18 +217,15 @@ public class ThresholdKey {
         return ShareStoreArray(pointer: result!)
     }
 
-    private func generate_new_share(use_tss: Bool = false, tss_options: TssOptions? = nil, completion: @escaping (Result<GenerateShareStoreResult, Error>) -> Void) {
+    private func generate_new_share(completion: @escaping (Result<GenerateShareStoreResult, Error>) -> Void) {
         tkeyQueue.async {
             do {
-                var options: OpaquePointer?
-                if tss_options != nil {
-                    options = tss_options!.pointer
-                }
+                let useTss = false
 
                 var errorCode: Int32 = -1
                 let curvePointer = UnsafeMutablePointer<Int8>(mutating: (self.curveN as NSString).utf8String)
                 let ptr = withUnsafeMutablePointer(to: &errorCode, { error in
-                    threshold_key_generate_share(self.pointer, curvePointer, use_tss, options, error)
+                    threshold_key_generate_share(self.pointer, curvePointer, useTss, nil, error)
                 })
                 guard errorCode == 0 else {
                     throw RuntimeError("Error in ThresholdKey generate_new_share")
@@ -254,16 +241,12 @@ public class ThresholdKey {
 
     /// Generates a new share.
     ///
-    /// - Parameters:
-    ///   - use_tss: Whether TSS should be used or not..
-    ///   - tss_options: TSS options that should be used for TSS.
-    ///
-    /// - Returns: `GenerateShareStoreArray`
+    /// - Returns: `GenerateShareStoreResult`
     ///
     /// - Throws: `RuntimeError`, indicates invalid `ThresholdKey`.
-    public func generate_new_share(use_tss: Bool = false, tss_options: TssOptions? = nil) async throws -> GenerateShareStoreResult {
+    public func generate_new_share() async throws -> GenerateShareStoreResult {
         return try await withCheckedThrowingContinuation {
-            continuation in self.generate_new_share(use_tss: use_tss, tss_options: tss_options) {
+            continuation in self.generate_new_share() {
                 result in
                 switch result {
                 case let .success(result):
@@ -275,18 +258,17 @@ public class ThresholdKey {
         }
     }
 
-    private func delete_share(share_index: String, use_tss: Bool = false, tss_options: TssOptions? = nil, completion: @escaping (Result<Void, Error>) -> Void) {
+    private func delete_share(share_index: String, completion: @escaping (Result<Void, Error>) -> Void) {
         tkeyQueue.async {
             do {
                 var errorCode: Int32 = -1
                 let curvePointer = UnsafeMutablePointer<Int8>(mutating: (self.curveN as NSString).utf8String)
                 let shareIndexPointer = UnsafeMutablePointer<Int8>(mutating: (share_index as NSString).utf8String)
-                var options: OpaquePointer?
-                if tss_options != nil {
-                    options = tss_options!.pointer
-                }
+
+                let useTss = false
+
                 withUnsafeMutablePointer(to: &errorCode, { error in
-                    threshold_key_delete_share(self.pointer, shareIndexPointer, curvePointer, use_tss, options, error)
+                    threshold_key_delete_share(self.pointer, shareIndexPointer, curvePointer, useTss, nil, error)
                 })
                 guard errorCode == 0 else {
                     throw RuntimeError("Error in Threshold while Deleting share")
@@ -301,10 +283,8 @@ public class ThresholdKey {
     /// Deletes a share at the specified index. Caution is advised to not try delete a share that would prevent the total number of shares being below the threshold.
     /// - Parameters:
     ///   - share_index: Share index to be deleted.
-    ///   - use_tss: Whether TSS should be used or not..
-    ///   - tss_options: TSS options that should be used for TSS.
     /// - Throws: `RuntimeError`, indicates invalid share index or invalid `ThresholdKey`.
-    public func delete_share(share_index: String, use_tss: Bool = false, tss_options: TssOptions? = nil) async throws {
+    public func delete_share(share_index: String) async throws {
         return try await withCheckedThrowingContinuation {
             continuation in
             self.delete_share(share_index: share_index) {
@@ -576,7 +556,7 @@ public class ThresholdKey {
     
     /// Retrieves all share indexes for a `ThresholdKey`.
     ///
-    /// - Returns: Array of `String`
+    /// - Returns: Array of String
     ///
     /// - Throws: `RuntimeError`, indicates invalid `ThresholdKey`.
     public func get_shares_indexes() throws -> [String] {
@@ -1067,6 +1047,14 @@ public class ThresholdKey {
         }
     }
 
+    /// Function to assign a public key to the service provider, used only for TSS
+    ///
+    /// - Parameters:
+    ///   - tag: The tss tag
+    ///   - nonce: The tss nonce
+    ///   - public_key: The pulic key to be assigned
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
     public func service_provider_assign_public_key(tag: String, nonce: String, public_key: String) throws {
         var errorCode: Int32 = -1
         let tagPointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: tag).utf8String)
@@ -1078,6 +1066,12 @@ public class ThresholdKey {
         }
     }
 
+    
+    /// Function to get all tss tags
+    ///
+    /// - Returns: Array of String
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
     public func get_all_tss_tags() throws -> [String] {
         var errorCode: Int32 = -1
 
@@ -1097,7 +1091,12 @@ public class ThresholdKey {
 
         return result_vec
     }
-
+    
+    /// Function to get extended verifier id
+    ///
+    /// - Returns: String
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
     public func get_extended_verifier_id() throws -> String {
         var errorCode: Int32 = -1
 
