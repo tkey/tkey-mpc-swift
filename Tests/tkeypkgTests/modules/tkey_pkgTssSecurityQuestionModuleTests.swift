@@ -41,11 +41,11 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         allIndex.removeAll(where: {$0 == "1"})
         try! TssModule.backup_share_with_factor_key(threshold_key: threshold_key, shareIndex: allIndex[0], factorKey: factor_key!.hex)
         
-        try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key,  question: question, answer: answer,factorKey: factor_key!.hex, description: "please enter password", tag: "special")
+        try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key,  question: question, answer: answer,factorKey: factor_key!.hex, tag: "special")
         
         
         do {
-            try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key, question: question, answer: answer_2, factorKey: factor_key!.hex, description: "please enter password", tag: "special")
+            try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key, question: question, answer: answer_2, factorKey: factor_key!.hex, tag: "special")
             XCTFail("Should not able to set quesetion twice")
         } catch {}
         
@@ -75,7 +75,7 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         }catch{}
         
         // able to set new question and answer
-        try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key, question: question2, answer: answer_2, factorKey: factor_key!.hex, description: "", tag: "special")
+        try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key, question: question2, answer: answer_2, factorKey: factor_key!.hex, tag: "special")
         
         let questionReturn2 = try TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
         XCTAssertEqual(questionReturn2, question2)
@@ -127,5 +127,15 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         
         XCTAssertEqual(String(newInstanceFactor.suffix(64)), factor_key!.hex)
         XCTAssertEqual(newInstanceQuestion, question)
+    }
+    
+    func test_js_compatible () async throws {
+        let threshold = try! ThresholdKey(
+            storage_layer: storage_layer,
+            service_provider: service_provider,
+            enable_logging: true,
+            manual_sync: false
+        )
+//        threshold.init
     }
 }

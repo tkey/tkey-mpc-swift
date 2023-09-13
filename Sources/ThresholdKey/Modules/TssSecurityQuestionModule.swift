@@ -38,12 +38,13 @@ public final class TssSecurityQuestionModule {
     ///   - threshold_key: The threshold key to act on.
     ///   - question: The security question.
     ///   - answer: The answer for the security question.
+    ///   - factorKey: Factor key that registred to security question
+    ///   - tag: tss tag
     ///
-    /// - Returns: `` object.
+    /// - Returns: ``
     ///
-    /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
-    //
-    public static func set_security_question( threshold : ThresholdKey, question: String, answer: String, factorKey :String, description: String, tag: String ) async throws {
+    /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key of failed to set security question
+    public static func set_security_question( threshold : ThresholdKey, question: String, answer: String, factorKey :String, tag: String ) async throws {
         //
         let domainKey = TssSecurityQuestion + ":" + tag
         
@@ -87,6 +88,17 @@ public final class TssSecurityQuestionModule {
     }
     
     
+    /// change security question to new question and answer
+    /// - Parameters:
+    ///   - threshold_key: The threshold key to act on.
+    ///   - newQuestion: The new security question .
+    ///   - newAnswer: The new answer for the security question.
+    ///   - answer: current answer
+    ///   - tag: tss tag
+    ///
+    /// - Returns: ``
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to change security question
     public static func change_security_question( threshold : ThresholdKey, newQuestion: String, newAnswer: String, answer: String, tag: String) async throws {
         let domainKey = TssSecurityQuestion + ":" + tag
         
@@ -139,6 +151,14 @@ public final class TssSecurityQuestionModule {
 
     }
     
+    /// delete security question
+    /// - Parameters:
+    ///   - threshold_key: The threshold key to act on.
+    ///   - tag: tss tag
+    ///
+    /// - Returns: `String` public key of the factor
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to delete security question
     public static func delete_security_question( threshold : ThresholdKey, tag: String) async throws -> String  {
         //
         let domainKey = TssSecurityQuestion + ":" + tag
@@ -167,7 +187,15 @@ public final class TssSecurityQuestionModule {
         return factorPub
     }
     
-    // get question
+    
+    /// get security question
+    /// - Parameters:
+    ///   - threshold_key: The threshold key to act on.
+    ///   - tag: tss tag
+    ///
+    /// - Returns: `String` question
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to get security question
     public static func get_question( threshold: ThresholdKey,  tag: String ) throws -> String {
         // get data format from json
         let domainKey = TssSecurityQuestion + ":" + tag
@@ -181,7 +209,16 @@ public final class TssSecurityQuestionModule {
         return jsonObj.question
     }
             
-    // getFactorKey
+    
+    /// recover security question's factor given correct answer
+    /// - Parameters:
+    ///   - threshold_key: The threshold key to act on.
+    ///   - answer: answer to security question
+    ///   - tag: tss tag
+    ///
+    /// - Returns: `String` factor key
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to delete security question
     public static func recover_factor ( threshold: ThresholdKey, answer: String , tag: String ) throws -> String {
         // get data format from json
         let domainKey = TssSecurityQuestion + ":" + tag
