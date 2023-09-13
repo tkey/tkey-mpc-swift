@@ -6,11 +6,28 @@ import BigInt
 
 let TssSecurityQuestion = "TssSecurityQuestion"
 
+
+public struct EncryptedMessage : Codable {
+    public let ciphertext: String;
+    public let ephemPublicKey: String;
+    public let iv: String;
+    public let mac: String;
+    
+    public func toString() throws -> String {
+        let data = try JSONEncoder().encode(self)
+//        let data = try JSONSerialization.data(withJSONObject: self)
+        guard let result = String(data: data, encoding: .utf8) else {
+            throw "invalid toString"
+        }
+        return result
+    }
+}
+
 public struct TssSecurityQuestionData : Codable{
-    let nonce: String
-    let question: String
-    let factorPub: String
-    let description: String
+    public var shareIndex: String
+    public var factorPublicKey: String
+    public var associatedFactor: EncryptedMessage
+    public var question: String
 }
 
 // Security question has low entrophy, hence it is not recommended way to secure the factor key or share
@@ -26,7 +43,7 @@ public final class TssSecurityQuestionModule {
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     //
-    public static func set_security_question( threshold : ThresholdKey, factorKey :String, question: String, answer: String, description: String, tag: String) throws {
+    public static func set_security_question( threshold : ThresholdKey, question: String, answer: String, factorKey :String, description: String, tag: String ) async throws {
         //
         let domainKey = TssSecurityQuestion + ":" + tag
         
@@ -40,28 +57,89 @@ public final class TssSecurityQuestionModule {
         
         if isSet {throw "Trying to set Security Question again"}
         
-        let factorBigInt = BigInt( sign: .plus, magnitude: BigUInt(Data(hex: factorKey)))
+        
         guard let hash = answer.data(using: .utf8)?.sha3(.keccak256) else {
-            throw "invalid answer format"
+            throw "Invalid answer format"
         }
-        let hashBigInt = BigInt( sign: .plus, magnitude: BigUInt(hash))
         
-        let nonceBigInt = factorBigInt - hashBigInt
-        let nonce = nonceBigInt.serialize().toHexString()
+        let hashKey = PrivateKey(hex: hash.toHexString())
+        let hashPub = try hashKey.toPublic();
+        guard let encryptedData = try encrypt(key: hashPub, msg: factorKey).data(using: .utf8) else {
+            throw "encryption error"
+        }
         
+        let encryptedMsg = try JSONDecoder().decode(EncryptedMessage.self, from: encryptedData)
+
         let factorPub = try PrivateKey(hex: factorKey).toPublic(format: .EllipticCompress)
-        // set to metadata using nonce, question, description, tag
-        let data = TssSecurityQuestionData(nonce: nonce, question: question, factorPub: factorPub, description: description)
+        
+        let shareIndex = "3"
+        
+        let data = TssSecurityQuestionData( shareIndex: shareIndex, factorPublicKey: factorPub, associatedFactor: encryptedMsg, question: question )
+        
         
         let jsonData = try JSONEncoder().encode(data)
         guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
             throw "Invalid security question data"
         }
         try threshold.set_general_store_domain(key: domainKey, data: jsonStr )
+        
+        try await threshold.sync_metadata();
+    }
+    
+    
+    public static func change_security_question( threshold : ThresholdKey, newQuestion: String, newAnswer: String, answer: String, tag: String) async throws {
+        let domainKey = TssSecurityQuestion + ":" + tag
+        
+        var isSet = false
+        do {
+            let question = try TssSecurityQuestionModule.get_question(threshold: threshold, tag: tag)
+            if question.count > 0 {
+                isSet = true
+            }
+        } catch {}
+        
+        if !isSet {throw "Security Question is not set"}
+        
+        // hash answer and new answer
+        guard let hash = answer.data(using: .utf8)?.sha3(.keccak256) else {
+            throw "Invalid answer format"
+        }
+
+        guard let newHash = newAnswer.data(using: .utf8)?.sha3(.keccak256) else {
+            throw "Invalid answer format"
+        }
+        
+        // get and decrypt factorkey and encrypt with new hash
+        guard let storeData = try threshold.get_general_store_domain(key: domainKey).data(using: .utf8) else {
+            throw "Invalid format"
+        }
+        var store = try JSONDecoder().decode(TssSecurityQuestionData.self, from: storeData)
+        
+        let associatedFactor = try decrypt(key: hash.toHexString(), msg: store.associatedFactor.toString() )
+        
+        let newHashKey = PrivateKey(hex: newHash.toHexString())
+        let newHashPub = try newHashKey.toPublic();
+        guard let encryptedData = try encrypt(key: newHashPub, msg: associatedFactor).data(using: .utf8) else {
+            throw "encryption error"
+        }
+        let encryptedMsg = try JSONDecoder().decode(EncryptedMessage.self, from: encryptedData)
+        
+        store.question = newQuestion
+        store.associatedFactor = encryptedMsg
+        
+        // set updated data to domain store
+        let jsonData = try JSONEncoder().encode(store)
+        
+        guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
+            throw "Invalid security question data"
+        }
+        try threshold.set_general_store_domain(key: domainKey, data: jsonStr )
+        
+        try await threshold.sync_metadata();
 
     }
     
-    public static func delete_security_question( threshold : ThresholdKey, tag: String) throws -> String {
+    public static func delete_security_question( threshold : ThresholdKey, tag: String) async throws -> String  {
         //
         let domainKey = TssSecurityQuestion + ":" + tag
         var isSet = false
@@ -74,9 +152,8 @@ public final class TssSecurityQuestionModule {
         if jsonObj.question.count > 0 {
             isSet = true
         }
-        let factorPub = jsonObj.factorPub
-        
         if !isSet {throw "Security Question is not set"}
+        let factorPub = jsonObj.factorPublicKey
         
         let emptyData : [String:String] = [:]
         
@@ -85,6 +162,8 @@ public final class TssSecurityQuestionModule {
             throw "Invalid security question data"
         }
         try threshold.set_general_store_domain(key: domainKey, data: jsonStr )
+        
+        try await threshold.sync_metadata();
         return factorPub
     }
     
@@ -103,7 +182,7 @@ public final class TssSecurityQuestionModule {
     }
             
     // getFactorKey
-    public static func get_factor_key ( threshold: ThresholdKey, answer: String , tag: String ) throws -> String {
+    public static func recover_factor ( threshold: ThresholdKey, answer: String , tag: String ) throws -> String {
         // get data format from json
         let domainKey = TssSecurityQuestion + ":" + tag
         
@@ -112,28 +191,15 @@ public final class TssSecurityQuestionModule {
             throw "invalid security question data"
         }
         
-        let jsonObj = try JSONDecoder().decode( TssSecurityQuestionData.self, from: data)
+        let store = try JSONDecoder().decode( TssSecurityQuestionData.self, from: data)
         
         // hash answer
         guard let hash = answer.data(using: .utf8)?.sha3(.keccak256) else {
             throw "invalid answer format"
         }
-        let hashBigInt = BigInt( sign: .plus, magnitude: BigUInt(hash))
-        
-        let nonce = BigInt(Data(hex: jsonObj.nonce))
+        let associatedFactor = try decrypt(key: hash.toHexString(), msg: store.associatedFactor.toString() )
         
         // get factorkey by adding answer hasn and nonce
-        let factorkeyBigInt = hashBigInt + nonce
-        
-        return factorkeyBigInt.serialize().toHexString()
+        return associatedFactor
     }
-    
-    
-    public static func input_share ( threshold :ThresholdKey, answer: String, tag: String) async throws -> String {
-        let factorKey = try TssSecurityQuestionModule.get_factor_key(threshold: threshold, answer: answer, tag: tag)
-        
-        try await threshold.input_factor_key(factorKey: factorKey)
-        return factorKey
-    }
-    
 }

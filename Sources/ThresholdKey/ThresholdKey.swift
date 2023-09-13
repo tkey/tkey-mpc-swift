@@ -803,6 +803,26 @@ public class ThresholdKey {
             }
         }
     }
+    
+    private func sync_metadata(completion: @escaping (Result<Void, Error>) -> Void) {
+        tkeyQueue.async {
+            do {
+                var errorCode: Int32 = -1
+
+                let curvePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: self.curveN).utf8String)
+
+                withUnsafeMutablePointer(to: &errorCode, { error in
+                    threshold_key_sync_metadata(self.pointer, curvePointer, error)
+                })
+                guard errorCode == 0 else {
+                    throw RuntimeError("Error in ThresholdKey sync_local_metadata_transistions")
+                }
+                completion(.success(()))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
 
     /// Syncronises metadata transitions, only used if manual sync is enabled.
     ///
@@ -811,6 +831,24 @@ public class ThresholdKey {
         return try await withCheckedThrowingContinuation {
             continuation in
             self.sync_local_metadata_transistions {
+                result in
+                switch result {
+                case let .success(result):
+                    continuation.resume(returning: result)
+                case let .failure(error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
+    /// create metadata transitions (to all shares), sync to server if manual sync is false.
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+    public func sync_metadata() async throws {
+        return try await withCheckedThrowingContinuation {
+            continuation in
+            self.sync_metadata {
                 result in
                 switch result {
                 case let .success(result):

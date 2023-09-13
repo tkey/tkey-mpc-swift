@@ -36,6 +36,8 @@
         void string_free(char *ptr);
         char* generate_private_key( char* curve_n, int* error_code);
         char* private_to_public( char* secret, int* error_code);
+        char* tkey_encrypt(char* public_key, char* data, char* curve_n, int* error_code);
+        char* tkey_decrypt(char* secret_key, char* data, int* error_code);
         struct Polynomial* lagrange_interpolate_polynomial(struct KeyPointArray* points, char* curve_n, int* error_code);
         char* key_point_get_x(struct KeyPoint* point, int* error_code);
         struct KeyPoint* key_point_new(char* x, char* y, int* error_code);
@@ -101,6 +103,7 @@
         struct Polynomial* threshold_key_reconstruct_latest_poly(struct FFIThresholdKey *threshold_key, char* curve_n, int* error_code);
         struct Metadata* threshold_key_get_last_fetched_cloud_metadata(struct FFIThresholdKey* threshold_key, int* error_code);
         void threshold_key_sync_local_metadata_transitions(struct FFIThresholdKey *threshold_key, char* curve_n, int* error_code);
+        void threshold_key_sync_metadata(struct FFIThresholdKey *threshold_key, char* curve_n, int* error_code);
         struct ShareStoreArray* threshold_key_get_all_share_stores_for_latest_polynomial(struct FFIThresholdKey* threshold_key, char* curve_n, int* error_code);
         struct ShareStorePolyIDShareIndexMap* threshold_key_get_shares(struct FFIThresholdKey* threshold_key, int* error_code);
 
