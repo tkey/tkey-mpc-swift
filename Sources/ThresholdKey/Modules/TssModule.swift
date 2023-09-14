@@ -471,6 +471,16 @@ public final class TssModule {
         }
     }
 
+    public static func register_factor (threshold_key: ThresholdKey, tss_tag: String, factor_key: String, auth_signatures: [String], new_factor_pub: String, new_tss_index: Int32, selected_servers: [Int32]? = nil, nodeDetails: AllNodeDetailsModel, torusUtils: TorusUtils) async throws {
+        
+        let (tss_index, _) = try await get_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, factorKey: factor_key)
+        if tss_index == String(new_factor_pub) {
+            try await copy_factor_pub(threshold_key: threshold_key, tss_tag: tss_tag, factorKey: factor_key, newFactorPub: new_factor_pub, tss_index: new_tss_index)
+        } else {
+            try await add_factor_pub(threshold_key: threshold_key, tss_tag: tss_tag, factor_key: factor_key, auth_signatures: auth_signatures, new_factor_pub: new_factor_pub, new_tss_index: new_tss_index, nodeDetails: nodeDetails, torusUtils: torusUtils)
+        }
+    }
+    
     /// Generate tss_index's share and register to new factor key
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.

@@ -763,9 +763,31 @@ public class ThresholdKey {
         string_free(result)
 
         return string
-//        let json = try! JSONSerialization.jsonObject(with: string.data(using: .utf8)!, options: .allowFragments) as! [String: Any]
-//        return json
     }
+    
+    
+    /// delete the general store domain.
+    ///
+    /// - Parameters:
+    ///   - key: key domain to be deleted
+    ///
+    /// - Returns: `String` json_string
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+    public func delete_general_store_domain(key: String) throws {
+        var errorCode: Int32 = -1
+        let keyPointer = UnsafeMutablePointer<Int8>(mutating: (key as NSString).utf8String)
+
+        let result = withUnsafeMutablePointer(to: &errorCode, { error in
+            threshold_key_get_general_store_domain(pointer, keyPointer, error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey get_domain_store_item")
+        }
+        let string = String(cString: result!)
+        string_free(result)
+    }
+
 
     /// Returns all shares according to their mapping.
     ///
