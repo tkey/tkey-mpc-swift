@@ -10,7 +10,40 @@ public class ThresholdKey {
     private(set) var use_tss: Bool = false
     internal let curveN = "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"
     internal let tkeyQueue = DispatchQueue(label: "thresholdkey.queue")
+    internal var authSignatures: [String]?
+    internal var nodeDetails: AllNodeDetailsModel?
+    internal var torusUtils: TorusUtils?
+    
+    public func getAuthSignatures () throws -> [String] {
+        guard let result = self.authSignatures else {
+            throw "authSignatures is undefined"
+        }
+        return result
+    }
+    public func getnodeDetails () throws -> AllNodeDetailsModel {
+        guard let result = self.nodeDetails else {
+            throw "authSignatures is undefined"
+        }
+        return result
+    }
+    public func getTorusUtils () throws -> TorusUtils {
+        guard let result = self.torusUtils else {
+            throw "authSignatures is undefined"
+        }
+        return result
+    }
+    
+    public func setAuthSignatures ( authSignatures: [String]) {
+        self.authSignatures = authSignatures
+    }
+    public func setnodeDetails (nodeDetails : AllNodeDetailsModel) {
+        self.nodeDetails = nodeDetails
+    }
+    public func setTorusUtils (torusUtils : TorusUtils) {
+        self.torusUtils = torusUtils
+    }
 
+    
     /// Instantiate a `ThresholdKey` object,
     ///
     /// - Parameters:
