@@ -68,7 +68,7 @@ public final class TssSecurityQuestionModule {
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key of failed to set security question
     public static func set_security_question( threshold : ThresholdKey, question: String, answer: String, factorKey :String, tag: String ) async throws -> String {
-        //
+        
         let domainKey = TssSecurityQuestion + ":" + tag
         
         var isSet = false
@@ -86,14 +86,16 @@ public final class TssSecurityQuestionModule {
         let hashKey = PrivateKey(hex: hash)
         let hashPub = try hashKey.toPublic();
         
-        let shareIndex = "3"
+        let shareIndex: Int32 = 3
         
-        let data = TssSecurityQuestionData( shareIndex: shareIndex, factorPublicKey: hashPub, question: question )
+        let data = TssSecurityQuestionData( shareIndex: String(shareIndex), factorPublicKey: hashPub, question: question )
         try threshold.set_general_store_domain(key: domainKey, data: data.toJsonString() )
         
-        try TssModule.register_factor(threshold_key: threshold, tss_tag: tag, factor_key: factorKey, auth_signatures: [], new_factor_pub: hashPub, new_tss_index: shareIndex, nodeDetails: <#T##AllNodeDetailsModel#>, torusUtils: <#T##TorusUtils#>)
+        // register
+        try await TssModule.register_factor(threshold_key: threshold, tss_tag: tag, factor_key: factorKey, new_factor_pub: hashPub, new_tss_index: shareIndex)
+        let deviceShareIndex = try await TssModule.find_device_share_index(threshold_key: threshold, factor_key: factorKey)
         
-        
+        try TssModule.backup_share_with_factor_key(threshold_key: threshold, shareIndex: deviceShareIndex, factorKey: hash)
         
         try await threshold.sync_metadata();
         
@@ -112,7 +114,7 @@ public final class TssSecurityQuestionModule {
     /// - Returns: ``
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to change security question
-    public static func change_security_question( threshold : ThresholdKey, newQuestion: String, newAnswer: String, answer: String, tag: String) async throws {
+    public static func change_security_question( threshold : ThresholdKey, newQuestion: String, newAnswer: String, answer: String, tag: String) async throws -> (String, String){
         let domainKey = TssSecurityQuestion + ":" + tag
         
         let storeStr = try threshold.get_general_store_domain(key: domainKey)
@@ -122,8 +124,22 @@ public final class TssSecurityQuestionModule {
         let hash = try compute_hash(threshold: threshold, answer: answer, tag: tag)
         let newHash = try compute_hash(threshold: threshold, answer: newAnswer, tag: tag)
         
+        let hashKey = PrivateKey(hex: hash)
+        let hashPub = try hashKey.toPublic();
+        
         let newHashKey = PrivateKey(hex: newHash)
         let newHashPub = try newHashKey.toPublic();
+        
+        // create new factor using newHash
+        let (tssIndex, _) = try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tag, factorKey: hash)
+        try await TssModule.register_factor(threshold_key: threshold, tss_tag: tag, factor_key: hash, new_factor_pub: newHashPub, new_tss_index: Int32(tssIndex)!)
+        let deviceShareIndex = try await TssModule.find_device_share_index(threshold_key: threshold, factor_key: hash)
+        try TssModule.backup_share_with_factor_key(threshold_key: threshold, shareIndex: deviceShareIndex, factorKey: newHash)
+        
+        // delete old hash factor
+        try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: hash, delete_factor_pub: hashPub)
+        // delete share metadata
+        
         
         store.question = newQuestion
         store.factorPublicKey = newHashPub
@@ -133,6 +149,8 @@ public final class TssSecurityQuestionModule {
         try threshold.set_general_store_domain(key: domainKey, data: jsonStr )
         
         try await threshold.sync_metadata();
+        
+        return (hash, newHash)
     }
     
     /// delete security question
@@ -143,7 +161,7 @@ public final class TssSecurityQuestionModule {
     /// - Returns: `String` public key of the factor
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to delete security question
-    public static func delete_security_question( threshold : ThresholdKey, tag: String) async throws -> String  {
+    public static func delete_security_question( threshold : ThresholdKey, tag: String, factorKey: String) async throws -> String  {
         //
         let domainKey = TssSecurityQuestion + ":" + tag
         
@@ -153,7 +171,9 @@ public final class TssSecurityQuestionModule {
         if jsonObj.question.count == 0 {
             throw "Security Question is not set"
         }
-        let factorPub = jsonObj.factorPublicKey
+        let deleteFactorPub = jsonObj.factorPublicKey
+        
+        try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: factorKey, delete_factor_pub: deleteFactorPub)
         
         // replace with delete store domain
         let emptyData : [String:String] = [:]
@@ -162,12 +182,10 @@ public final class TssSecurityQuestionModule {
         guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
             throw "Invalid security question data"
         }
-        
         try threshold.set_general_store_domain(key: domainKey, data: jsonStr )
-        
-        //
         try await threshold.sync_metadata();
-        return factorPub
+        
+        return deleteFactorPub
     }
     
     

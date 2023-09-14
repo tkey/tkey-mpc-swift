@@ -252,7 +252,7 @@ public final class TssModule {
     ///   - torusUtils: torusUtils used to retrieve dkg tss pub key
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
-    public static func create_tagged_tss_share(threshold_key: ThresholdKey, tss_tag: String, deviceTssShare: String?, factorPub: String, deviceTssIndex: Int32) async throws {
+    public static func create_tagged_tss_share(threshold_key: ThresholdKey, tss_tag: String, deviceTssShare: String? = nil, factorPub: String, deviceTssIndex: Int32) async throws {
         try await TssModule.set_tss_tag(threshold_key: threshold_key, tss_tag: tss_tag)
         try await TssModule.update_tss_pub_key(threshold_key: threshold_key, tss_tag: tss_tag)
         return try await withCheckedThrowingContinuation {
@@ -390,7 +390,7 @@ public final class TssModule {
                     threshold_key_generate_tss_share(threshold_key.pointer, inputSharePointer, tss_input_index, new_tss_index, newFactorPubPointer, serversPointer, authSignaturesPointer, curvePointer, error)
                 })
                 guard errorCode == 0 else {
-                    throw RuntimeError("Error in ThresholdKey generate_tss_share")
+                    throw RuntimeError("Error in ThresholdKey generate_tss_share : \(errorCode)")
                 }
                 completion(.success(()))
             } catch {
@@ -472,13 +472,15 @@ public final class TssModule {
         }
     }
 
-    public static func register_factor (threshold_key: ThresholdKey, tss_tag: String, factor_key: String, auth_signatures: [String], new_factor_pub: String, new_tss_index: Int32, selected_servers: [Int32]? = nil, nodeDetails: AllNodeDetailsModel, torusUtils: TorusUtils) async throws {
+    public static func register_factor (threshold_key: ThresholdKey, tss_tag: String, factor_key: String, new_factor_pub: String, new_tss_index: Int32, selected_servers: [Int32]? = nil ) async throws {
+        if factor_key.count > 66 { throw RuntimeError("Invalid factor Key") }
+        try await TssModule.set_tss_tag(threshold_key: threshold_key, tss_tag: tss_tag)
         
-        let (tss_index, _) = try await get_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, factorKey: factor_key)
+        let (tss_index, tss_share ) = try await get_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, factorKey: factor_key)
         if tss_index == String(new_factor_pub) {
             try await copy_factor_pub(threshold_key: threshold_key, tss_tag: tss_tag, factorKey: factor_key, newFactorPub: new_factor_pub, tss_index: new_tss_index)
         } else {
-            try await add_factor_pub(threshold_key: threshold_key, tss_tag: tss_tag, factor_key: factor_key, auth_signatures: auth_signatures, new_factor_pub: new_factor_pub, new_tss_index: new_tss_index, nodeDetails: nodeDetails, torusUtils: torusUtils)
+            try await TssModule.generate_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, input_tss_share: tss_share, tss_input_index: Int32(tss_index)!, new_factor_pub: new_factor_pub, new_tss_index: new_tss_index, selected_servers: selected_servers)
         }
     }
     
