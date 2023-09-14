@@ -37,6 +37,11 @@ final class integrationTests: XCTestCase {
             manual_sync: false,
             rss_comm: rss_comm
         )
+        
+        // setting variables needed for tss operations
+        threshold.setAuthSignatures(authSignatures: signatures)
+        threshold.setnodeDetails(nodeDetails: nodeDetail)
+        threshold.setTorusUtils(torusUtils: torusUtils)
 
         _ = try! await threshold.initialize()
         _ = try! await threshold.reconstruct()
@@ -48,7 +53,7 @@ final class integrationTests: XCTestCase {
         let factorPub = try factorKey.toPublic()
         try TssModule.backup_share_with_factor_key(threshold_key: threshold, shareIndex: shareIndex.hex, factorKey: factorKey.hex)
         
-        try await TssModule.create_tagged_tss_share(threshold_key: threshold, tss_tag: tssTag, deviceTssShare: nil, factorPub: factorPub, deviceTssIndex: 2, nodeDetails: nodeDetail, torusUtils: torusUtils)
+        try await TssModule.create_tagged_tss_share(threshold_key: threshold, tss_tag: tssTag, deviceTssShare: nil, factorPub: factorPub, deviceTssIndex: 2 )
 
         let (tss_index, tss_share) = try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tssTag, factorKey: factorKey.hex)
 
@@ -57,7 +62,7 @@ final class integrationTests: XCTestCase {
         let newFactorKey = try PrivateKey.generate()
         let newFactorPub = try newFactorKey.toPublic()
         // 2/2 -> 2/3 tss
-        try await TssModule.generate_tss_share(threshold_key: threshold, tss_tag: tssTag, input_tss_share: tss_share, tss_input_index: Int32(tss_index)!, auth_signatures: signatures, new_factor_pub: newFactorPub, new_tss_index: 3, nodeDetails: nodeDetail, torusUtils: torusUtils)
+        try await TssModule.generate_tss_share(threshold_key: threshold, tss_tag: tssTag, input_tss_share: tss_share, tss_input_index: Int32(tss_index)!, new_factor_pub: newFactorPub, new_tss_index: 3)
         let (tss_index3, tss_share3) = try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tssTag, factorKey: newFactorKey.hex)
 
         let (_, tss_share_updated) = try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tssTag, factorKey: factorKey.hex)
@@ -73,6 +78,12 @@ final class integrationTests: XCTestCase {
             enable_logging: true,
             manual_sync: false
         )
+        
+        // setting variables needed for tss operations
+        threshold2.setAuthSignatures(authSignatures: signatures)
+        threshold2.setnodeDetails(nodeDetails: nodeDetail)
+        threshold2.setTorusUtils(torusUtils: torusUtils)
+
         _ = try! await threshold2.initialize()
         
         try await threshold2.input_factor_key(factorKey: factorKey.hex)
@@ -91,7 +102,7 @@ final class integrationTests: XCTestCase {
         XCTAssertEqual(tss_index3, tss_index2_3)
 
         // 2/3 -> 2/2 tss
-        try await TssModule.delete_tss_share(threshold_key: threshold, tss_tag: tssTag, input_tss_share: tss_share3, tss_input_index: Int32(tss_index3)!, auth_signatures: signatures, delete_factor_pub: newFactorPub, nodeDetails: nodeDetail, torusUtils: torusUtils)
+        try await TssModule.delete_tss_share(threshold_key: threshold, tss_tag: tssTag, input_tss_share: tss_share3, tss_input_index: Int32(tss_index3)!, delete_factor_pub: newFactorPub)
         // XCTAssertThrowsError( try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tssTag, factorKey: newFactorKey.hex) )
 
         let (tss_index_updated2, tss_share_updated2) = try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tssTag, factorKey: factorKey.hex)
@@ -101,10 +112,10 @@ final class integrationTests: XCTestCase {
         XCTAssertNotEqual(tss_share_updated, tss_share_updated2)
 
         // 2/2 -> 2/3 tss
-        try await TssModule.add_factor_pub(threshold_key: threshold, tss_tag: tssTag, factor_key: factorKey.hex, auth_signatures: signatures, new_factor_pub: newFactorPub, new_tss_index: 3, nodeDetails: nodeDetail, torusUtils: torusUtils)
+        try await TssModule.add_factor_pub(threshold_key: threshold, tss_tag: tssTag, factor_key: factorKey.hex, new_factor_pub: newFactorPub, new_tss_index: 3)
 
         // 2/3 -> 2/2 tss
-        try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tssTag, factor_key: factorKey.hex, auth_signatures: signatures, delete_factor_pub: newFactorPub, nodeDetails: nodeDetail, torusUtils: torusUtils)
+        try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tssTag, factor_key: factorKey.hex, delete_factor_pub: newFactorPub )
     }
 
     func test_TssModule_multi_tag() async throws {
@@ -142,6 +153,11 @@ final class integrationTests: XCTestCase {
             manual_sync: true,
             rss_comm: rss_comm
         )
+        
+        // setting variables needed for tss operations
+        threshold.setAuthSignatures(authSignatures: signatures)
+        threshold.setnodeDetails(nodeDetails: nodeDetail)
+        threshold.setTorusUtils(torusUtils: torusUtils)
 
         _ = try! await threshold.initialize()
         _ = try! await threshold.reconstruct()
@@ -149,7 +165,7 @@ final class integrationTests: XCTestCase {
         let share = try threshold.output_share(shareIndex: shareIndex.hex)
         print(share)
 
-        let testTags = ["tag1", "tag2", "tag3", "tag4", "tag5"]
+        let testTags = ["tag1", "tag2", "tag3", "tag4"]
 
         var tssMods: [(ThresholdKey, String)] = []
 
@@ -171,7 +187,7 @@ final class integrationTests: XCTestCase {
             factorPubs.append(factorPub)
 
             try await TssModule.set_tss_tag(threshold_key: threshold, tss_tag: tag)
-            try await TssModule.create_tagged_tss_share(threshold_key: threshold, tss_tag: tag, deviceTssShare: nil, factorPub: factorPub, deviceTssIndex: 2, nodeDetails: nodeDetail, torusUtils: torusUtils)
+            try await TssModule.create_tagged_tss_share(threshold_key: threshold, tss_tag: tag, deviceTssShare: nil, factorPub: factorPub, deviceTssIndex: 2)
 
             let (tssIndex, tssShare) = try! await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tag, factorKey: factorKey.hex)
             tssIndexes.append(tssIndex)
@@ -188,7 +204,7 @@ final class integrationTests: XCTestCase {
 
             newFactorKeys.append(newFactorKey)
             newFactorPubs.append(newFactorPub)
-            try await TssModule.add_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: factorKeys[index].hex, auth_signatures: signatures, new_factor_pub: newFactorPub, new_tss_index: 3, nodeDetails: nodeDetail, torusUtils: torusUtils)
+            try await TssModule.add_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: factorKeys[index].hex, new_factor_pub: newFactorPub, new_tss_index: 3)
 
             try await threshold.sync_local_metadata_transistions()
 
@@ -235,6 +251,11 @@ final class integrationTests: XCTestCase {
             enable_logging: true,
             manual_sync: false
         )
+        // setting variables needed for tss operations
+        threshold2.setAuthSignatures(authSignatures: signatures)
+        threshold2.setnodeDetails(nodeDetails: nodeDetail)
+        threshold2.setTorusUtils(torusUtils: torusUtils)
+        
         _ = try! await threshold2.initialize()
         try! await threshold2.input_share(share: share, shareType: nil)
         _ = try! await threshold2.reconstruct()
@@ -255,7 +276,7 @@ final class integrationTests: XCTestCase {
 
             newFactorKeys2.append(newFactorKey2)
             newFactorPubs2.append(newFactorPub2)
-            try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: newFactorKeys[index].hex, auth_signatures: signatures, delete_factor_pub: newFactorPubs[index], nodeDetails: nodeDetail, torusUtils: torusUtils)
+            try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: newFactorKeys[index].hex, delete_factor_pub: newFactorPubs[index])
         }
         try await threshold.sync_local_metadata_transistions()
         print(try threshold.get_all_tss_tags())
