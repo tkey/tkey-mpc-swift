@@ -477,7 +477,7 @@ public final class TssModule {
         try await TssModule.set_tss_tag(threshold_key: threshold_key, tss_tag: tss_tag)
         
         let (tss_index, tss_share ) = try await get_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, factorKey: factor_key)
-        if tss_index == String(new_factor_pub) {
+        if tss_index == String(new_tss_index) {
             try await copy_factor_pub(threshold_key: threshold_key, tss_tag: tss_tag, factorKey: factor_key, newFactorPub: new_factor_pub, tss_index: new_tss_index)
         } else {
             try await TssModule.generate_tss_share(threshold_key: threshold_key, tss_tag: tss_tag, input_tss_share: tss_share, tss_input_index: Int32(tss_index)!, new_factor_pub: new_factor_pub, new_tss_index: new_tss_index, selected_servers: selected_servers)
@@ -553,22 +553,39 @@ public final class TssModule {
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
     public static func find_device_share_index(threshold_key: ThresholdKey, factor_key: String) async throws -> String {
         let result = try await threshold_key.storage_layer_get_metadata(private_key: factor_key)
+        
         guard let resultData = result.data(using: .utf8) else {
             throw "Invalid factor key"
         }
         guard let resultJson = try JSONSerialization.jsonObject(with: resultData) as? [String: Any] else {
             throw "Invalid factor key"
         }
-        guard let deviceShareJson = resultJson["deviceShare"] as? [String: Any] else {
-            throw "Invalid factor key"
-        }
-        guard let shareJson = deviceShareJson["share"] as? [String: Any] else {
-            throw "Invalid factor key"
-        }
-        guard let shareIndex = shareJson["shareIndex"] as? String else {
-            throw "Invalid factor key"
-        }
-        return shareIndex
+
+        let shareStore = try ShareStore(json: result)
+        return try shareStore.share_index()
+//
+//        // TODO : Fix the deserialization of the Factor cloud metadata
+//        // ts implemetation break this
+//        let deviceShareJson : [String: Any]
+//        if resultJson["deviceShare"] != nil {
+//            guard var deviceShare = resultJson["deviceShare"] as? [String: Any] else {
+//                throw "invalid factor json without deviceShare or share indexkey"
+//            }
+//            deviceShareJson = deviceShare
+//        } else {
+//            guard let deviceShare = resultJson["share"] as? [String:Any] else {
+//                throw "invalid factor json without deviceShare or share indexkey"
+//            }
+//            deviceShareJson = deviceShare
+//        }
+//
+//        guard let shareJson = deviceShareJson["share"] as? [String: Any] else {
+//            throw "Invalid factor key"
+//        }
+//        guard let shareIndex = shareJson["shareIndex"] as? String else {
+//            throw "Invalid factor key"
+//        }
+//        return shareIndex
     }
 
     /// Function to get dkg public key

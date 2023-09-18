@@ -29,7 +29,9 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         
         
         let postbox_key = try! PrivateKey.generate()
-        let storage_layer_local = try! StorageLayer(enable_logging: true, host_url: "https://metadata.tor.us", server_time_offset: 2)
+        let tssEndpoint0 = nodeDetail.torusNodeTSSEndpoints[0]
+        let metadataEndpoint = tssEndpoint0.replacingOccurrences(of: "/tss", with: "") + "/metadata"
+        let storage_layer_local = try! StorageLayer(enable_logging: true, host_url: metadataEndpoint, server_time_offset: 2)
         let service_provider_local = try! ServiceProvider(enable_logging: true, postbox_key: postbox_key.hex, verifier: TORUS_TEST_VERIFIER, verifierId: TORUS_TEST_EMAIL, nodeDetails: nodeDetail)
         let rss_comm = try! RssComm()
         let threshold = try! ThresholdKey(
@@ -93,11 +95,10 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         
         XCTAssertEqual(String(factor.suffix(64)), sq_factor)
         
-        
         // delete security question and add new security question
         let factorPubDeleted = try await TssSecurityQuestionModule.delete_security_question(threshold: threshold_key, tag: "special", factorKey: factor_key.hex)
         XCTAssertEqual(factorPubDeleted, try PrivateKey(hex: sq_factor).toPublic(format: .EllipticCompress))
-        
+    
         
         do {
             let _ = try TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
@@ -167,12 +168,57 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
     }
     
     func test_js_compatible () async throws {
+        
+        let TORUS_TEST_EMAIL = "testing2001@example.com"
+        let TORUS_TEST_VERIFIER = "torus-test-health"
+        
+        let nodeManager = NodeDetailManager(network: .sapphire(.SAPPHIRE_DEVNET))
+        let nodeDetail = try await nodeManager.getNodeDetails(verifier: TORUS_TEST_VERIFIER, verifierID: TORUS_TEST_EMAIL)
+        let torusUtils = TorusUtils(serverTimeOffset: 2, network: .sapphire(.SAPPHIRE_DEVNET))
+        
+        let idToken = try generateIdToken(email: TORUS_TEST_EMAIL)
+        let verifierParams = VerifierParams(verifier_id: TORUS_TEST_EMAIL)
+        let retrievedShare = try await torusUtils.retrieveShares(endpoints: nodeDetail.torusNodeEndpoints, torusNodePubs: nodeDetail.torusNodePub, indexes: nodeDetail.torusIndexes, verifier: TORUS_TEST_VERIFIER, verifierParams: verifierParams, idToken: idToken)
+        let signature = retrievedShare.sessionData?.sessionTokenData
+        let signatures = signature!.compactMap { item in
+            item?.signature
+        }
+        
+        guard let postbox = retrievedShare.oAuthKeyData?.privKey else {
+            throw "invalid postbox key"
+        }
+        print(postbox)
+        let service_provider_local = try! ServiceProvider(enable_logging: true, postbox_key: postbox , verifier: TORUS_TEST_VERIFIER, verifierId: TORUS_TEST_EMAIL, nodeDetails: nodeDetail)
+        let rss_comm = try  RssComm()
         let threshold = try! ThresholdKey(
             storage_layer: storage_layer,
-            service_provider: service_provider,
+            service_provider: service_provider_local,
             enable_logging: true,
-            manual_sync: false
+            manual_sync: false,
+            rss_comm: rss_comm
         )
+
+        _ = try! await threshold.initialize()
+        
+        // setting variables needed for tss operations
+        threshold.setAuthSignatures(authSignatures: signatures)
+        threshold.setnodeDetails(nodeDetails: nodeDetail)
+        threshold.setTorusUtils(torusUtils: torusUtils)
 //        threshold.init
+        print( try threshold.get_key_details().pub_key.getPublicKey(format: .EllipticCompress))
+        let factorKey = "36c1728c47c84dfe855949fa76daf82f8bda801af9374f30aa4c91b7fd7a8e3b"
+        let answer = "jsanswer"
+        let question = "js question"
+        
+        let questionResult = try TssSecurityQuestionModule.get_question(threshold: threshold, tag: "default")
+        print(questionResult)
+        let factor = try TssSecurityQuestionModule.recover_factor(threshold: threshold, answer: answer, tag: "default")
+        print(factor)
+        
+        try await threshold.input_factor_key(factorKey: factor)
+        try await threshold.reconstruct()
+        let (tssIndex, tssShare) = try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: "default", factorKey: factor)
+        print (tssIndex)
+        print (tssShare)
     }
 }

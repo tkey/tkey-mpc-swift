@@ -141,7 +141,7 @@ public class ThresholdKey {
                 let ptr = withUnsafeMutablePointer(to: &device_index, { tssDeviceIndexPointer in withUnsafeMutablePointer(to: &errorCode, { error in
                     threshold_key_initialize(self.pointer, keyPointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, false,  curvePointer, useTss, nil, tssDeviceIndexPointer, nil, error) }) })
                 guard errorCode == 0 else {
-                    throw RuntimeError("Error in ThresholdKey Initialize")
+                    throw RuntimeError("Error in ThresholdKey Initialize \(errorCode)")
                 }
                 let result = try! KeyDetails(pointer: ptr!)
                 completion(.success(result))
@@ -557,7 +557,7 @@ public class ThresholdKey {
                     threshold_key_input_factor_key(self.pointer, cFactorKey, error)
                 })
                 guard errorCode == 0 else {
-                    throw RuntimeError("Error in ThresholdKey input_factor_key")
+                    throw RuntimeError("Error in ThresholdKey input_factor_key \(errorCode)")
                 }
                 completion(.success(()))
             } catch {
@@ -790,7 +790,7 @@ public class ThresholdKey {
             threshold_key_get_general_store_domain(pointer, keyPointer, error)
         })
         guard errorCode == 0 else {
-            throw RuntimeError("Error in ThresholdKey get_domain_store_item")
+            throw RuntimeError("Error in ThresholdKey get_domain_store_item \(errorCode)")
         }
         let string = String(cString: result!)
         string_free(result)

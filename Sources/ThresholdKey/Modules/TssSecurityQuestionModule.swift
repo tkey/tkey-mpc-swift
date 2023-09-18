@@ -4,7 +4,7 @@ import Foundation
 #endif
 import BigInt
 
-let TssSecurityQuestion = "TssSecurityQuestion"
+let TssSecurityQuestion = "tssSecurityQuestion"
 
 
 public struct EncryptedMessage : Codable {
@@ -97,8 +97,6 @@ public final class TssSecurityQuestionModule {
         
         try TssModule.backup_share_with_factor_key(threshold_key: threshold, shareIndex: deviceShareIndex, factorKey: hash)
         
-        try await threshold.sync_metadata();
-        
         return hash
     }
     
@@ -172,18 +170,13 @@ public final class TssSecurityQuestionModule {
             throw "Security Question is not set"
         }
         let deleteFactorPub = jsonObj.factorPublicKey
+
+        // replace with delete store domain 
+        // sync_metadata is not required as delete_factor_pub will sync metadata
+        let jsonStr1 = "{}"
+        try threshold.set_general_store_domain(key: domainKey, data: jsonStr1 )
         
         try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: factorKey, delete_factor_pub: deleteFactorPub)
-        
-        // replace with delete store domain
-        let emptyData : [String:String] = [:]
-        
-        let jsonData = try JSONEncoder().encode(emptyData)
-        guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
-            throw "Invalid security question data"
-        }
-        try threshold.set_general_store_domain(key: domainKey, data: jsonStr )
-        try await threshold.sync_metadata();
         
         return deleteFactorPub
     }
