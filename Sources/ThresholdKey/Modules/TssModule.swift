@@ -340,9 +340,8 @@ public final class TssModule {
     /// - Parameters:
     ///   - threshold_key: The threshold key to act on.
     ///   - tss_tag: The tss tah.
-    ///   - factor_key: Valid factor key that needed to execute this operation.
-    ///   - auth_signatures: Signature data that need to be validated by signing server .
-    ///   - new_factor_pub: Public key of the new factor that added (registered)
+    ///   - factorKey: Valid factor key that needed to execute this operation.
+    ///   - newFactorPub: Public key of the new factor that added (registered)
     ///   - tss_index: tss_index that should match with existing factor key's tss_index
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
@@ -579,5 +578,68 @@ public final class TssModule {
         }
         let pubKey = TSSPubKeyResult.Point(x: x, y: y)
         return TSSPubKeyResult(publicKey: pubKey, nodeIndexes: nodeIndexes)
+    }
+    
+    private static func import_tss_key(threshold_key: ThresholdKey, update_metadata: Bool, tss_tag: String, import_key: String, new_tss_index: Int32, factor_pub: KeyPoint, auth_signatures: [String], selected_servers: [Int32]? = nil, completion: @escaping (Result<Void, Error>) -> Void) {
+        threshold_key.tkeyQueue.async {
+            do {
+                var errorCode: Int32 = -1
+
+                let auth_signatures_json = try JSONSerialization.data(withJSONObject: auth_signatures)
+                guard let auth_signatures_str = String(data: auth_signatures_json, encoding: .utf8) else {
+                    throw RuntimeError("auth signatures error")
+                }
+                
+                let authSignaturesPointer = UnsafeMutablePointer<Int8>(mutating: (auth_signatures_str as NSString).utf8String)
+
+                var serversPointer: UnsafeMutablePointer<Int8>?
+                if selected_servers != nil {
+                    let selected_servers_json = try JSONSerialization.data(withJSONObject: selected_servers as Any)
+                    let selected_servers_str = String(data: selected_servers_json, encoding: .utf8)!
+                    serversPointer = UnsafeMutablePointer<Int8>(mutating: (selected_servers_str as NSString).utf8String)
+                }
+                
+                let tssTagPtr = UnsafeMutablePointer<Int8>(mutating: (tss_tag as NSString).utf8String)
+                let importKeyPtr = UnsafeMutablePointer<Int8>(mutating: (import_key as NSString).utf8String)
+                
+                let curvePointer = UnsafeMutablePointer<Int8>(mutating: (threshold_key.curveN as NSString).utf8String)
+                withUnsafeMutablePointer(to: &errorCode, { error in
+                    threshold_key_import_tss_key(threshold_key.pointer, update_metadata, tssTagPtr, importKeyPtr, new_tss_index, factor_pub.pointer, serversPointer, authSignaturesPointer, curvePointer, error)
+                })
+                guard errorCode == 0 else {
+                    throw RuntimeError("Error in ThresholdKey import_tss_key")
+                }
+                completion(.success(()))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+
+    /// Initialize new tagged tss key and create the tss share
+    /// - Parameters:
+    ///   - threshold_key: The threshold key to act on.
+    ///   - update_metadata: Whether to update metadata
+    ///   - tss_tag: tss tag.
+    ///   - import_key : tss key to be imported
+    ///   - new_tss_index: tss index key will  be imported to
+    ///   - factor_pub: public key for import
+    ///   - nodeDetails: nodeDetails that sdk should comunicate to
+    ///   - torusUtils: torusUtils used to retrieve dkg tss pub key
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
+    public static func import_tss_key(threshold_key: ThresholdKey, update_metadata: Bool, tss_tag: String,  new_tss_index: Int32, import_key: String, factor_pub: KeyPoint, auth_signatures: [String], selected_servers: [Int32]? = nil) async throws {
+        return try await withCheckedThrowingContinuation {
+            continuation in
+            import_tss_key(threshold_key: threshold_key, update_metadata: update_metadata, tss_tag: tss_tag, import_key: import_key, new_tss_index: new_tss_index, factor_pub: factor_pub, auth_signatures: auth_signatures, selected_servers: selected_servers) {
+                result in
+                switch result {
+                case let .success(result):
+                    continuation.resume(returning: result)
+                case let .failure(error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
 }
