@@ -94,6 +94,7 @@
         void threshold_key_input_share(struct FFIThresholdKey* threshold_key, char* share, char* share_type, char* curve_n, int* error_code);
         struct ShareStore* threshold_key_output_share_store(struct FFIThresholdKey* threshold_key, char* share_index, char* poly_id, char* curve_n, int* error_code);
         void threshold_key_input_share_store(struct FFIThresholdKey* threshold_key, struct ShareStore* share_store, int* error_code);
+        void threshold_key_patch_input_factor_key(struct FFIThresholdKey* threshold_key, char* factor_key, char* curve_n, int* error_code);
         void threshold_key_input_factor_key(struct FFIThresholdKey* threshold_key, char* factor_key, int* error_code);
         char* threshold_key_get_shares_indexes(struct FFIThresholdKey* threshold_key, int* error_code);
         char* threshold_key_encrypt(struct FFIThresholdKey* threshold_key, char* data, char* curve_n, int* error_code);

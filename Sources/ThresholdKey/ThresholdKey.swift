@@ -587,6 +587,48 @@ public class ThresholdKey {
         }
     }
     
+    
+    private func patch_input_factor_key(factorKey: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        tkeyQueue.async {
+            do {
+                var errorCode: Int32 = -1
+                let cFactorKey = UnsafeMutablePointer<Int8>(mutating: (factorKey as NSString).utf8String)
+                let curvePointer = UnsafeMutablePointer<Int8>(mutating: (self.curveN as NSString).utf8String)
+
+                withUnsafeMutablePointer(to: &errorCode, { error in
+                    threshold_key_patch_input_factor_key(self.pointer, cFactorKey, curvePointer, error)
+                })
+                guard errorCode == 0 else {
+                    throw RuntimeError("Error in ThresholdKey input_factor_key \(errorCode)")
+                }
+                completion(.success(()))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+
+    /// Patch and Inserts a `ShareStore` into `ThresholdKey` using `FactorKey`, useful for insertion before reconstruction to ensure the number of shares meet the minimum threshold.
+    ///
+    /// - Parameters:
+    ///   - factorKey  : The `factorKey` to be inserted
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+    public func patch_input_factor_key(factorKey: String) async throws {
+        return try await withCheckedThrowingContinuation {
+            continuation in
+            self.patch_input_factor_key(factorKey: factorKey) {
+                result in
+                switch result {
+                case let .success(result):
+                    continuation.resume(returning: result)
+                case let .failure(error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
     /// Retrieves all share indexes for a `ThresholdKey`.
     ///
     /// - Returns: Array of String
