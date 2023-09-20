@@ -4,6 +4,21 @@ import Foundation
 #endif
 
 
+func multipartData (finalMetadataParams: [[String: Any]] , boundary: String) -> Data {
+    // Create a FormData-like structure in Swift
+    var formData = Data()
+    for (key, value) in finalMetadataParams.enumerated() {
+        if let jsonValue = try? JSONSerialization.data(withJSONObject: value) {
+            formData.append("--\(boundary)\r\n".data(using: .utf8)!)
+            formData.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            formData.append(jsonValue)
+            formData.append("\r\n".data(using: .utf8)!)
+        }
+    }
+    formData.append("--\(boundary)--".data(using: .utf8)!)
+    return formData
+}
+
 public final class StorageLayer {
     private(set) var pointer: OpaquePointer?
     
@@ -51,29 +66,12 @@ public final class StorageLayer {
             request.addValue("Content-Type", forHTTPHeaderField: "Access-Control-Allow-Headers")
 
             if urlString.split(separator: "/").last == "bulk_set_stream" {
-                // let boundary = UUID().uuidString;
-                // request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-                request.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-
+                let boundary = UUID().uuidString;
+                request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+                
                 let json = try! JSONSerialization.jsonObject(with: dataString.data(using: String.Encoding.utf8)!, options: .allowFragments) as! [[String: Any]]
-
-                // for item in json {
-                    // let dataItem = try! JSONSerialization.data(withJSONObject: item, options: .prettyPrinted)
-                    // requestData.append(StorageLayer.createMultipartBody(data: dataItem, boundary: boundary, file: "multipartData"))
-                // }
-
-                var form_data: [String] = []
-
-                // urlencoded item format: "(key)=(self.percentEscapeString(value))"
-                for (index, element) in json.enumerated() {
-                    let json_elem = try! JSONSerialization.data(withJSONObject: element, options: .withoutEscapingSlashes)
-                    let json_escaped_string = StorageLayer.percentEscapeString(string: String(data: json_elem, encoding: .utf8)!)
-                    let final_string = String(index) + "=" + json_escaped_string
-                    form_data.append(final_string)
-                }
-                let body_data = form_data.joined(separator: "&")
-
-                request.httpBody = body_data.data(using: String.Encoding.utf8)
+                let formData = multipartData(finalMetadataParams: json, boundary: boundary)
+                request.httpBody = formData
             } else {
                 request.addValue("application/json", forHTTPHeaderField: "Content-Type")
                 request.httpBody = dataString.data(using: String.Encoding.utf8)
