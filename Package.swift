@@ -17,7 +17,8 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , branch: "fix_deps"),
+        .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , from: "6.0.1"),
+        .package(name: "secp256k1", url: "https://github.com/GigaBitcoin/secp256k1.swift" , .exact("0.12.2")),
         // dev dependencies only
         .package(name:"CryptoSwift", url: "https://github.com/krzyzanowskim/CryptoSwift",from: "1.5.1"),
         .package(name:"jwt-kit", url: "https://github.com/vapor/jwt-kit", from: "4.0.0"),
