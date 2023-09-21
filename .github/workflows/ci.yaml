@@ -14,12 +14,14 @@ jobs:
     runs-on: macOS-latest
     strategy:
       matrix:
+        swift: ^5.9
         platform:
           - iOS
     steps:
       - uses: actions/checkout@v2.3.4
       - uses: mxcl/xcodebuild@v1
         with:
+          swift: ${{ matrix.swift }}
           platform: ${{ matrix.platform }}
           action: test
           scheme: tkey_pkg
