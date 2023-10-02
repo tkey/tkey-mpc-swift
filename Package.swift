@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "tkey_pkg",
     platforms: [
-        .iOS(SupportedPlatform.IOSVersion.v14),
+        .iOS(.v14), .macOS(.v10_15)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -18,9 +18,10 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , from: "6.0.1"),
+        .package(name: "secp256k1", url: "https://github.com/GigaBitcoin/secp256k1.swift" , .exact("0.12.2")),
         // dev dependencies only
-        .package(name:"CryptoSwift", url: "https://github.com/krzyzanowskim/CryptoSwift.git",from: "1.5.1"),
-        .package(name:"jwt-kit", url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0"),
+        .package(name:"CryptoSwift", url: "https://github.com/krzyzanowskim/CryptoSwift",from: "1.5.1"),
+        .package(name:"jwt-kit", url: "https://github.com/vapor/jwt-kit", from: "4.0.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -42,5 +43,6 @@ let package = Package(
             dependencies: ["tkey-pkg", "CryptoSwift", .product(name: "JWTKit", package: "jwt-kit")],
             path: "Tests/tkeypkgTests"
         ),
-    ]
+    ],
+    swiftLanguageVersions: [.v5]
 )
