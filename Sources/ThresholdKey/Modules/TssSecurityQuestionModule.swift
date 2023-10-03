@@ -67,36 +67,44 @@ public final class TssSecurityQuestionModule {
     /// - Returns: ``
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key of failed to set security question
-    public static func set_security_question( threshold : ThresholdKey, question: String, answer: String, factorKey :String, tag: String ) async throws -> String {
+    public static func set_security_question( threshold : ThresholdKey, question: String, answer: String, factorKey :String, selectedServer:String, tag: String ) async throws -> String {
         
-        let domainKey = TssSecurityQuestion + ":" + tag
-        
-        var isSet = false
-        do {
-            let question = try TssSecurityQuestionModule.get_question(threshold: threshold, tag: tag)
-            if question.count > 0 {
-                isSet = true
-            }
-        } catch {}
-        
-        if isSet {throw "Trying to set Security Question again"}
-        
+        try await TssModule.set_tss_tag(threshold_key: threshold, tss_tag: tag)
+        try await TssModule.update_tss_pub_key(threshold_key: threshold, tss_tag: tag, prefetch: true)
+        var errorCode: Int32 = -1
         let hash = try compute_hash(threshold: threshold, answer: answer, tag: tag)
+        let factorKeyPtr = UnsafeMutablePointer<Int8>(mutating: (factorKey as NSString).utf8String)
+        let questionPtr = UnsafeMutablePointer<Int8>(mutating: (question as NSString).utf8String)
+        let hashPtr = UnsafeMutablePointer<Int8>(mutating: (hash as NSString).utf8String)
+        let curvePointer = UnsafeMutablePointer<Int8>(mutating: (threshold.curveN as NSString).utf8String)
+        
+        
+        
+        let auth_signatures_json = try JSONSerialization.data(withJSONObject: threshold.authSignatures)
+        guard let auth_signatures_str = String(data: auth_signatures_json, encoding: .utf8) else {
+            throw RuntimeError("auth signatures error")
+        }
+        let authSignaturesPointer = UnsafeMutablePointer<Int8>(mutating: (auth_signatures_str as NSString).utf8String)
+        
+        let selectedServers:[UInt32] = [1,2,3]
+        let selected_servers_json = try JSONSerialization.data(withJSONObject: selectedServers as Any)
+        guard let selected_servers_str = String(data: selected_servers_json, encoding: .utf8) else {
+            throw RuntimeError("selectedServers error")
+        }
+        let serversPointer = UnsafeMutablePointer<Int8>(mutating: (selected_servers_str as NSString).utf8String)
 
-        let hashKey = PrivateKey(hex: hash)
-        let hashPub = try hashKey.toPublic();
+//        let tssIndex: UInt32 = 2
+
+        withUnsafeMutablePointer(to: &errorCode, { error in
+            tss_security_question_set_security_question(threshold.pointer, factorKeyPtr, questionPtr, hashPtr,  2, serversPointer, authSignaturesPointer,
+                                                        curvePointer,  error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey set_security_question \(errorCode)")
+        }
         
-        let shareIndex: Int32 = 3
-        
-        let data = TssSecurityQuestionData( shareIndex: String(shareIndex), factorPublicKey: hashPub, question: question )
-        try threshold.set_general_store_domain(key: domainKey, data: data.toJsonString() )
-        
-        // register
-        try await TssModule.register_factor(threshold_key: threshold, tss_tag: tag, factor_key: factorKey, new_factor_pub: hashPub, new_tss_index: shareIndex)
-        let deviceShareIndex = try await TssModule.find_device_share_index(threshold_key: threshold, factor_key: factorKey)
-        
-        try TssModule.backup_share_with_factor_key(threshold_key: threshold, shareIndex: deviceShareIndex, factorKey: hash)
-        
+        let shareIndex = try await TssModule.find_device_share_index(threshold_key: threshold, factor_key: factorKey);
+        try TssModule.backup_share_with_factor_key(threshold_key: threshold, shareIndex: shareIndex, factorKey: hash)
         return hash
     }
     
@@ -113,41 +121,37 @@ public final class TssSecurityQuestionModule {
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to change security question
     public static func change_security_question( threshold : ThresholdKey, newQuestion: String, newAnswer: String, answer: String, tag: String) async throws -> (String, String){
-        let domainKey = TssSecurityQuestion + ":" + tag
+
+        try await TssModule.set_tss_tag(threshold_key: threshold, tss_tag: tag)
+        try await TssModule.update_tss_pub_key(threshold_key: threshold, tss_tag: tag, prefetch: true, incNonce: 2)
+        var errorCode: Int32 = -1
         
-        let storeStr = try threshold.get_general_store_domain(key: domainKey)
-        var store = try TssSecurityQuestionData.fromJsonString(jsonStr: storeStr)
-        
-        // hash answer and new answer
         let hash = try compute_hash(threshold: threshold, answer: answer, tag: tag)
         let newHash = try compute_hash(threshold: threshold, answer: newAnswer, tag: tag)
+        let newQuestionPtr = UnsafeMutablePointer<Int8>(mutating: (newQuestion as NSString).utf8String)
+        let hashPtr = UnsafeMutablePointer<Int8>(mutating: (hash as NSString).utf8String)
+        let newHashPtr = UnsafeMutablePointer<Int8>(mutating: (newHash as NSString).utf8String)
+        let curvePointer = UnsafeMutablePointer<Int8>(mutating: (threshold.curveN as NSString).utf8String)
         
-        let hashKey = PrivateKey(hex: hash)
-        let hashPub = try hashKey.toPublic();
+        let auth_signatures_json = try JSONSerialization.data(withJSONObject: threshold.authSignatures)
+        guard let auth_signatures_str = String(data: auth_signatures_json, encoding: .utf8) else {
+            throw RuntimeError("auth signatures error")
+        }
+        let authSignaturesPointer = UnsafeMutablePointer<Int8>(mutating: (auth_signatures_str as NSString).utf8String)
         
-        let newHashKey = PrivateKey(hex: newHash)
-        let newHashPub = try newHashKey.toPublic();
-        
-        // create new factor using newHash
-        let (tssIndex, _) = try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tag, factorKey: hash)
-        try await TssModule.register_factor(threshold_key: threshold, tss_tag: tag, factor_key: hash, new_factor_pub: newHashPub, new_tss_index: Int32(tssIndex)!)
-        let deviceShareIndex = try await TssModule.find_device_share_index(threshold_key: threshold, factor_key: hash)
-        try TssModule.backup_share_with_factor_key(threshold_key: threshold, shareIndex: deviceShareIndex, factorKey: newHash)
-        
-        // delete old hash factor
-        try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: hash, delete_factor_pub: hashPub)
-        // delete share metadata
-        
-        
-        store.question = newQuestion
-        store.factorPublicKey = newHashPub
-        
-        // set updated data to domain store
-        let jsonStr = try store.toJsonString()
-        try threshold.set_general_store_domain(key: domainKey, data: jsonStr )
-        
-        try await threshold.sync_metadata();
-        
+        let selectedServers:[UInt32] = [1,2,3]
+        let selected_servers_json = try JSONSerialization.data(withJSONObject: selectedServers as Any)
+        guard let selected_servers_str = String(data: selected_servers_json, encoding: .utf8) else {
+            throw RuntimeError("selectedServers error")
+        }
+        let serversPointer = UnsafeMutablePointer<Int8>(mutating: (selected_servers_str as NSString).utf8String)
+
+        withUnsafeMutablePointer(to: &errorCode, { error in
+            tss_security_question_change_question(threshold.pointer, newHashPtr, newQuestionPtr, hashPtr, serversPointer, authSignaturesPointer, curvePointer,  error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey change_security_question \(errorCode)")
+        }
         return (hash, newHash)
     }
     
@@ -159,26 +163,43 @@ public final class TssSecurityQuestionModule {
     /// - Returns: `String` public key of the factor
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to delete security question
-    public static func delete_security_question( threshold : ThresholdKey, tag: String, factorKey: String) async throws -> String  {
-        //
-        let domainKey = TssSecurityQuestion + ":" + tag
+    public static func delete_security_question( threshold : ThresholdKey, tag: String, factorKey: String
+                                                 , answer: String? = nil) async throws -> String  {
         
-        let jsonStr = try threshold.get_general_store_domain(key: domainKey)
-        let jsonObj = try TssSecurityQuestionData.fromJsonString(jsonStr: jsonStr)
-        
-        if jsonObj.question.count == 0 {
-            throw "Security Question is not set"
-        }
-        let deleteFactorPub = jsonObj.factorPublicKey
+        try await TssModule.set_tss_tag(threshold_key: threshold, tss_tag: tag)
+        try await TssModule.update_tss_pub_key(threshold_key: threshold, tss_tag: tag, prefetch: true)
 
-        // replace with delete store domain 
-        // sync_metadata is not required as delete_factor_pub will sync metadata
-        let jsonStr1 = "{}"
-        try threshold.set_general_store_domain(key: domainKey, data: jsonStr1 )
+        var errorCode: Int32 = -1
+        let factorKeyPtr = UnsafeMutablePointer<Int8>(mutating: (factorKey as NSString).utf8String)
+        var hashPtr : UnsafeMutablePointer<Int8>?;
+        if let answer = answer {
+            let hash = try self.compute_hash(threshold: threshold, answer: answer, tag: tag)
+            hashPtr =  UnsafeMutablePointer<Int8>(mutating: (hash as NSString).utf8String)
+        }
+        let curvePointer = UnsafeMutablePointer<Int8>(mutating: (threshold.curveN as NSString).utf8String)
         
-        try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: factorKey, delete_factor_pub: deleteFactorPub)
+        let auth_signatures_json = try JSONSerialization.data(withJSONObject: threshold.authSignatures)
+        guard let auth_signatures_str = String(data: auth_signatures_json, encoding: .utf8) else {
+            throw RuntimeError("auth signatures error")
+        }
+        let authSignaturesPointer = UnsafeMutablePointer<Int8>(mutating: (auth_signatures_str as NSString).utf8String)
         
-        return deleteFactorPub
+        let selectedServers:[UInt32] = [1,2,3]
+        let selected_servers_json = try JSONSerialization.data(withJSONObject: selectedServers as Any)
+        guard let selected_servers_str = String(data: selected_servers_json, encoding: .utf8) else {
+            throw RuntimeError("selectedServers error")
+        }
+        let serversPointer = UnsafeMutablePointer<Int8>(mutating: (selected_servers_str as NSString).utf8String)
+        
+        let result = withUnsafeMutablePointer(to: &errorCode, { error in
+            tss_security_question_delete_security_question(threshold.pointer, factorKeyPtr, hashPtr, serversPointer, authSignaturesPointer, curvePointer, error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey delete_security_question \(errorCode)")
+        }
+        let hash = String(cString: result!)
+        string_free(result)
+        return hash
     }
     
     
@@ -190,14 +211,21 @@ public final class TssSecurityQuestionModule {
     /// - Returns: `String` question
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to get security question
-    public static func get_question( threshold: ThresholdKey,  tag: String ) throws -> String {
-        // get data format from json
-        let domainKey = TssSecurityQuestion + ":" + tag
+    public static func get_question( threshold: ThresholdKey,  tag: String ) async throws -> String {
         
-        let jsonStr = try threshold.get_general_store_domain(key: domainKey)
-        let jsonObj = try TssSecurityQuestionData.fromJsonString(jsonStr: jsonStr)
+        try await TssModule.set_tss_tag(threshold_key: threshold, tss_tag: tag)
+        var errorCode: Int32 = -1
+
+        let result = withUnsafeMutablePointer(to: &errorCode, { error in
+            tss_security_question_get_question(threshold.pointer, error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey get_question \(errorCode)")
+        }
+        let question = String(cString: result!)
+        string_free(result)
+        return question
         
-        return jsonObj.question
     }
             
     
@@ -210,18 +238,23 @@ public final class TssSecurityQuestionModule {
     /// - Returns: `String` factor key
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key or fail to delete security question
-    public static func recover_factor ( threshold: ThresholdKey, answer: String , tag: String ) throws -> String {
-        // get data format from json
-        let domainKey = TssSecurityQuestion + ":" + tag
-        let jsonStr = try threshold.get_general_store_domain(key: domainKey)
-        let store = try TssSecurityQuestionData.fromJsonString(jsonStr: jsonStr)
-
-        // hash answer
+    public static func recover_factor ( threshold: ThresholdKey, answer: String , tag: String ) async throws -> String {
+        
+        try await TssModule.set_tss_tag(threshold_key: threshold, tss_tag: tag)
+        var errorCode: Int32 = -1
+        
         let hash = try compute_hash(threshold: threshold, answer: answer, tag: tag)
-        let factorPub = try PrivateKey(hex: hash).toPublic(format: .EllipticCompress);
-        if (factorPub != store.factorPublicKey) {
-            throw "Invalid Answer"
+        
+        let answerPtr = UnsafeMutablePointer<Int8>(mutating: (hash as NSString).utf8String)
+
+        let result = withUnsafeMutablePointer(to: &errorCode, { error in
+            tss_security_question_recover_factor(threshold.pointer, answerPtr, error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey recover_factor \(errorCode)")
         }
+        let hashOut = String(cString: result!)
+        string_free(result)
         
         return hash
     }

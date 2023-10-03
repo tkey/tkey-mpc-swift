@@ -67,26 +67,28 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         let factor_key = try! PrivateKey.generate()
         let factor_pub = try factor_key.toPublic(format: .EllipticCompress)
         var allIndex = try! threshold_key.get_shares_indexes()
+        let tag = "special"
         allIndex.removeAll(where: {$0 == "1"})
         
         try await TssModule.create_tagged_tss_share(threshold_key: threshold_key, tss_tag: "special", deviceTssShare: nil, factorPub: factor_pub, deviceTssIndex: 2)
         
         try! TssModule.backup_share_with_factor_key(threshold_key: threshold_key, shareIndex: allIndex[0], factorKey: factor_key.hex)
         
-        let sq_factor = try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key,  question: question, answer: answer,factorKey: factor_key.hex, tag: "special")
+        try await TssModule.set_tss_tag(threshold_key: threshold_key, tss_tag: tag)
+        let sq_factor = await try TssSecurityQuestionModule.set_security_question(threshold: threshold_key,  question: question, answer: answer,factorKey: factor_key.hex, selectedServer: "[1,2,3]", tag: "special")
         
         
         do {
-            let _ = try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key, question: question, answer: answer_2, factorKey: factor_key.hex, tag: "special")
+            let _ = try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key, question: question, answer: answer_2, factorKey: factor_key.hex, selectedServer: "[1,2,3]", tag: "special")
             XCTFail("Should not able to set quesetion twice")
         } catch {}
         
-        let questionReturn = try? TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
+        let questionReturn = try? await TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
         XCTAssertEqual(questionReturn, question)
         
-        let factor = try TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer, tag: "special")
+        let factor = try await TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer, tag: "special")
         do {
-            let _ = try TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer_2, tag: "special")
+            let _ = try await TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer_2, tag: "special")
             XCTFail("Should be able to get factor using incorrect answer")
         } catch {}
         try await threshold_key.input_factor_key(factorKey: factor)
@@ -101,24 +103,24 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
     
         
         do {
-            let _ = try TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
+            let _ = try await TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
             XCTFail("Should not able get question after delete")
         }catch{}
         do {
-            let _ = try TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer, tag: "special")
+            let _ = try await TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer, tag: "special")
             XCTFail("Should not able get question after delete")
         }catch{}
         
         // able to set new question and answer
-        let sq_factor2 = try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key, question: question2, answer: answer_2, factorKey: factor_key.hex, tag: "special")
+        let sq_factor2 = try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key, question: question2, answer: answer_2, factorKey: factor_key.hex, selectedServer: "[]", tag: "special")
         
-        let questionReturn2 = try TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
+        let questionReturn2 = try await TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
         XCTAssertEqual(questionReturn2, question2)
         
-        let factor2 = try TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer_2, tag: "special")
+        let factor2 = try await TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer_2, tag: "special")
         
         do {
-            let _ = try TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer, tag: "special")
+            let _ = try await TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer, tag: "special")
             XCTFail("Should be able to get factor using incorrect answer")
         } catch {}
         
@@ -135,12 +137,12 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         XCTAssertEqual(old_sq_factor, sq_factor2)
         
         do {
-            let _ = try TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer_2, tag: "special")
+            let _ = try await TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer_2, tag: "special")
             XCTFail("Should be not able to get factor using incorrect answer")
         } catch {}
         
-        let questionChanged = try TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
-        let factorChanged = try TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer, tag: "special")
+        let questionChanged = try await TssSecurityQuestionModule.get_question(threshold: threshold_key, tag: "special")
+        let factorChanged = try await TssSecurityQuestionModule.recover_factor(threshold: threshold_key, answer: answer, tag: "special")
         
         XCTAssertEqual(String(factorChanged.suffix(64)), new_sq_factor)
         XCTAssertEqual(questionChanged, question)
@@ -156,8 +158,8 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         
         let _ = try await newThreshold.initialize();
         
-        let newInstanceQuestion = try TssSecurityQuestionModule.get_question(threshold: newThreshold, tag: "special")
-        let newInstanceFactor = try TssSecurityQuestionModule.recover_factor(threshold: newThreshold, answer: answer, tag: "special")
+        let newInstanceQuestion = try await TssSecurityQuestionModule.get_question(threshold: newThreshold, tag: "special")
+        let newInstanceFactor = try await TssSecurityQuestionModule.recover_factor(threshold: newThreshold, answer: answer, tag: "special")
         
         try await newThreshold.input_factor_key(factorKey: newInstanceFactor)
         try await newThreshold.input_factor_key(factorKey: newInstanceFactor)
@@ -210,9 +212,9 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         let answer = "jsanswer"
         let question = "js question"
         
-        let questionResult = try TssSecurityQuestionModule.get_question(threshold: threshold, tag: "default")
+        let questionResult = try await TssSecurityQuestionModule.get_question(threshold: threshold, tag: "default")
         print(questionResult)
-        let factor = try TssSecurityQuestionModule.recover_factor(threshold: threshold, answer: answer, tag: "default")
+        let factor = try await TssSecurityQuestionModule.recover_factor(threshold: threshold, answer: answer, tag: "default")
         print(factor)
         
         try await threshold.input_factor_key(factorKey: factor)

@@ -169,7 +169,7 @@ public final class TssModule {
     /// - Returns: `Int32`
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
-    public static func get_tss_nonce(threshold_key: ThresholdKey, tss_tag: String, prefetch: Bool = false) throws -> Int32 {
+    public static func get_tss_nonce(threshold_key: ThresholdKey, tss_tag: String, prefetch: Bool = false, incNonce: Int32 = 1) throws -> Int32 {
         var errorCode: Int32 = -1
         let tss_tag_pointer: UnsafeMutablePointer<Int8>? = UnsafeMutablePointer<Int8>(mutating: NSString(string: tss_tag).utf8String)
         var nonce = withUnsafeMutablePointer(to: &errorCode, { error in
@@ -179,7 +179,7 @@ public final class TssModule {
         }
 
         if prefetch {
-            nonce += 1
+            nonce += incNonce
         }
 
         return nonce
@@ -208,7 +208,7 @@ public final class TssModule {
             threshold_key_get_tss_share(threshold_key.pointer, factorKeyPointer, threshold, curvePointer, error)
         })
         guard errorCode == 0 else {
-            throw RuntimeError("Error in ThresholdKey get_tss_share")
+            throw RuntimeError("Error in ThresholdKey get_tss_share \(errorCode)")
         }
         let string = String(cString: result!)
         string_free(result)
@@ -289,10 +289,10 @@ public final class TssModule {
     ///    - prefetch: Fetch the next nonce's pub key
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
-    public static func update_tss_pub_key(threshold_key: ThresholdKey, tss_tag: String, prefetch: Bool = false) async throws {
+    public static func update_tss_pub_key(threshold_key: ThresholdKey, tss_tag: String, prefetch: Bool = false, incNonce: Int32 = 1) async throws {
         try await TssModule.set_tss_tag(threshold_key: threshold_key, tss_tag: tss_tag)
 
-        let nonce = String(try get_tss_nonce(threshold_key: threshold_key, tss_tag: tss_tag, prefetch: prefetch))
+        let nonce = String(try get_tss_nonce(threshold_key: threshold_key, tss_tag: tss_tag, prefetch: prefetch, incNonce: incNonce))
 
         let public_address = try await get_dkg_pub_key(threshold_key: threshold_key, tssTag: tss_tag, nonce: nonce)
         let pk_encoded = try JSONEncoder().encode(public_address)
@@ -472,7 +472,7 @@ public final class TssModule {
         }
     }
 
-    public static func register_factor (threshold_key: ThresholdKey, tss_tag: String, factor_key: String, new_factor_pub: String, new_tss_index: Int32, selected_servers: [Int32]? = nil ) async throws {
+    public static func create_factor (threshold_key: ThresholdKey, tss_tag: String, factor_key: String, new_factor_pub: String, new_tss_index: Int32, selected_servers: [Int32]? = nil ) async throws {
         if factor_key.count > 66 { throw RuntimeError("Invalid factor Key") }
         try await TssModule.set_tss_tag(threshold_key: threshold_key, tss_tag: tss_tag)
         
