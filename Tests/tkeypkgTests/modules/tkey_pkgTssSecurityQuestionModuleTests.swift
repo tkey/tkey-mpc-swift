@@ -56,6 +56,7 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
     
     override func tearDown() {
         threshold_key = nil
+        
     }
     
     func test() async throws {
@@ -75,7 +76,7 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         try! TssModule.backup_share_with_factor_key(threshold_key: threshold_key, shareIndex: allIndex[0], factorKey: factor_key.hex)
         
         try await TssModule.set_tss_tag(threshold_key: threshold_key, tss_tag: tag)
-        let sq_factor = await try TssSecurityQuestionModule.set_security_question(threshold: threshold_key,  question: question, answer: answer,factorKey: factor_key.hex, selectedServer: "[1,2,3]", tag: "special")
+        let sq_factor = try await TssSecurityQuestionModule.set_security_question(threshold: threshold_key,  question: question, answer: answer,factorKey: factor_key.hex, selectedServer: "[1,2,3]", tag: "special")
         
         
         do {
@@ -147,8 +148,8 @@ final class tkey_pkgTssSecurityQuestionModuleTests: XCTestCase {
         XCTAssertEqual(String(factorChanged.suffix(64)), new_sq_factor)
         XCTAssertEqual(questionChanged, question)
         
-        try await threshold_key.sync_local_metadata_transistions()
         
+
         let newThreshold = try! ThresholdKey(
             storage_layer: storage_layer,
             service_provider: service_provider,

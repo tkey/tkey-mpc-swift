@@ -35,8 +35,6 @@
         void string_free(char *ptr);
         char* generate_private_key( char* curve_n, int* error_code);
         char* private_to_public( char* secret, int* error_code);
-        char* tkey_encrypt(char* public_key, char* data, char* curve_n, int* error_code);
-        char* tkey_decrypt(char* secret_key, char* data, int* error_code);
         struct Polynomial* lagrange_interpolate_polynomial(struct KeyPointArray* points, char* curve_n, int* error_code);
         char* key_point_get_x(struct KeyPoint* point, int* error_code);
         struct KeyPoint* key_point_new(char* x, char* y, int* error_code);
