@@ -10,7 +10,40 @@ public class ThresholdKey {
     private(set) var use_tss: Bool = false
     internal let curveN = "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"
     internal let tkeyQueue = DispatchQueue(label: "thresholdkey.queue")
+    internal var authSignatures: [String]?
+    internal var nodeDetails: AllNodeDetailsModel?
+    internal var torusUtils: TorusUtils?
+    
+    public func getAuthSignatures () throws -> [String] {
+        guard let result = self.authSignatures else {
+            throw "authSignatures is undefined"
+        }
+        return result
+    }
+    public func getnodeDetails () throws -> AllNodeDetailsModel {
+        guard let result = self.nodeDetails else {
+            throw "authSignatures is undefined"
+        }
+        return result
+    }
+    public func getTorusUtils () throws -> TorusUtils {
+        guard let result = self.torusUtils else {
+            throw "authSignatures is undefined"
+        }
+        return result
+    }
+    
+    public func setAuthSignatures ( authSignatures: [String]) {
+        self.authSignatures = authSignatures
+    }
+    public func setnodeDetails (nodeDetails : AllNodeDetailsModel) {
+        self.nodeDetails = nodeDetails
+    }
+    public func setTorusUtils (torusUtils : TorusUtils) {
+        self.torusUtils = torusUtils
+    }
 
+    
     /// Instantiate a `ThresholdKey` object,
     ///
     /// - Parameters:
@@ -108,7 +141,7 @@ public class ThresholdKey {
                 let ptr = withUnsafeMutablePointer(to: &device_index, { tssDeviceIndexPointer in withUnsafeMutablePointer(to: &errorCode, { error in
                     threshold_key_initialize(self.pointer, keyPointer, storePtr, neverInitializeNewKey, includeLocalMetadataTransitions, false,  curvePointer, useTss, nil, tssDeviceIndexPointer, nil, error) }) })
                 guard errorCode == 0 else {
-                    throw RuntimeError("Error in ThresholdKey Initialize")
+                    throw RuntimeError("Error in ThresholdKey Initialize \(errorCode)")
                 }
                 let result = try! KeyDetails(pointer: ptr!)
                 completion(.success(result))
@@ -524,7 +557,7 @@ public class ThresholdKey {
                     threshold_key_input_factor_key(self.pointer, cFactorKey, error)
                 })
                 guard errorCode == 0 else {
-                    throw RuntimeError("Error in ThresholdKey input_factor_key")
+                    throw RuntimeError("Error in ThresholdKey input_factor_key \(errorCode)")
                 }
                 completion(.success(()))
             } catch {
@@ -553,6 +586,48 @@ public class ThresholdKey {
             }
         }
     }
+    
+    
+//    private func patch_input_factor_key(factorKey: String, completion: @escaping (Result<Void, Error>) -> Void) {
+//        tkeyQueue.async {
+//            do {
+//                var errorCode: Int32 = -1
+//                let cFactorKey = UnsafeMutablePointer<Int8>(mutating: (factorKey as NSString).utf8String)
+//                let curvePointer = UnsafeMutablePointer<Int8>(mutating: (self.curveN as NSString).utf8String)
+//
+//                withUnsafeMutablePointer(to: &errorCode, { error in
+//                    threshold_key_patch_input_factor_key(self.pointer, cFactorKey, curvePointer, error)
+//                })
+//                guard errorCode == 0 else {
+//                    throw RuntimeError("Error in ThresholdKey input_factor_key \(errorCode)")
+//                }
+//                completion(.success(()))
+//            } catch {
+//                completion(.failure(error))
+//            }
+//        }
+//    }
+
+    /// Patch and Inserts a `ShareStore` into `ThresholdKey` using `FactorKey`, useful for insertion before reconstruction to ensure the number of shares meet the minimum threshold.
+    ///
+    /// - Parameters:
+    ///   - factorKey  : The `factorKey` to be inserted
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+//    public func patch_input_factor_key(factorKey: String) async throws {
+//        return try await withCheckedThrowingContinuation {
+//            continuation in
+//            self.patch_input_factor_key(factorKey: factorKey) {
+//                result in
+//                switch result {
+//                case let .success(result):
+//                    continuation.resume(returning: result)
+//                case let .failure(error):
+//                    continuation.resume(throwing: error)
+//                }
+//            }
+//        }
+//    }
     
     /// Retrieves all share indexes for a `ThresholdKey`.
     ///
@@ -716,6 +791,78 @@ public class ThresholdKey {
         let json = try! JSONSerialization.jsonObject(with: string.data(using: .utf8)!, options: .allowFragments) as! [String: Any]
         return json
     }
+    
+    
+    /// set the general store domain.
+    ///
+    /// - Parameters:
+    ///   - key: key domain to be stored
+    ///   - data: json string data t be stored
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+    public func set_general_store_domain( key: String, data: String) throws {
+        var errorCode: Int32 = -1
+        let keyPointer = UnsafeMutablePointer<Int8>(mutating: (key as NSString).utf8String)
+
+        let dataPointer = UnsafeMutablePointer<Int8>(mutating: (data as NSString).utf8String)
+
+        withUnsafeMutablePointer(to: &errorCode, { error in
+            threshold_key_set_general_store_domain(pointer, keyPointer, dataPointer, error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey set_domain_store_item : error Code : \(errorCode)")
+        }
+    }
+    
+    
+    
+    /// Returns the general store domain.
+    ///
+    /// - Parameters:
+    ///   - key: key domain stored
+    ///
+    /// - Returns: `String` json_string
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+    public func get_general_store_domain(key: String) throws -> String {
+        var errorCode: Int32 = -1
+        let keyPointer = UnsafeMutablePointer<Int8>(mutating: (key as NSString).utf8String)
+
+        let result = withUnsafeMutablePointer(to: &errorCode, { error in
+            threshold_key_get_general_store_domain(pointer, keyPointer, error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey get_domain_store_item \(errorCode)")
+        }
+        let string = String(cString: result!)
+        string_free(result)
+
+        return string
+    }
+    
+    
+    /// delete the general store domain.
+    ///
+    /// - Parameters:
+    ///   - key: key domain to be deleted
+    ///
+    /// - Returns: `String` json_string
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+    public func delete_general_store_domain(key: String) throws {
+        var errorCode: Int32 = -1
+        let keyPointer = UnsafeMutablePointer<Int8>(mutating: (key as NSString).utf8String)
+
+        let result = withUnsafeMutablePointer(to: &errorCode, { error in
+            threshold_key_get_general_store_domain(pointer, keyPointer, error)
+        })
+        guard errorCode == 0 else {
+            throw RuntimeError("Error in ThresholdKey get_domain_store_item")
+        }
+        let string = String(cString: result!)
+        string_free(result)
+    }
+
 
     /// Returns all shares according to their mapping.
     ///
@@ -753,6 +900,26 @@ public class ThresholdKey {
             }
         }
     }
+    
+    private func sync_metadata(completion: @escaping (Result<Void, Error>) -> Void) {
+        tkeyQueue.async {
+            do {
+                var errorCode: Int32 = -1
+
+                let curvePointer = UnsafeMutablePointer<Int8>(mutating: NSString(string: self.curveN).utf8String)
+
+                withUnsafeMutablePointer(to: &errorCode, { error in
+                    threshold_key_sync_metadata(self.pointer, curvePointer, error)
+                })
+                guard errorCode == 0 else {
+                    throw RuntimeError("Error in ThresholdKey sync_local_metadata_transistions")
+                }
+                completion(.success(()))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
 
     /// Syncronises metadata transitions, only used if manual sync is enabled.
     ///
@@ -761,6 +928,24 @@ public class ThresholdKey {
         return try await withCheckedThrowingContinuation {
             continuation in
             self.sync_local_metadata_transistions {
+                result in
+                switch result {
+                case let .success(result):
+                    continuation.resume(returning: result)
+                case let .failure(error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
+    /// create metadata transitions (to all shares), sync to server if manual sync is false.
+    ///
+    /// - Throws: `RuntimeError`, indicates invalid parameters or invalid `ThresholdKey`.
+    public func sync_metadata() async throws {
+        return try await withCheckedThrowingContinuation {
+            continuation in
+            self.sync_metadata {
                 result in
                 switch result {
                 case let .success(result):
