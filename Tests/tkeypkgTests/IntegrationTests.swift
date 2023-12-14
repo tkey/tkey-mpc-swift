@@ -7,7 +7,7 @@ import XCTest
 
 final class integrationTests: XCTestCase {
     func test_TssModule() async throws {
-        let TORUS_TEST_EMAIL = "saasa21231@tr.us"
+        let TORUS_TEST_EMAIL = "saasa2123@tr.us"
         // let TORUS_IMPORT_EMAIL = "importeduser2@tor.us";
 
         // let TORUS_EXTENDED_VERIFIER_EMAIL = "testextenderverifierid@example.com";
@@ -108,7 +108,7 @@ final class integrationTests: XCTestCase {
     }
 
     func test_TssModule_multi_tag() async throws {
-        let TORUS_TEST_EMAIL = "saasa341@tr.us"
+        let TORUS_TEST_EMAIL = "saasa34@tr.us"
         // let TORUS_IMPORT_EMAIL = "importeduser2@tor.us";
 
         // let TORUS_EXTENDED_VERIFIER_EMAIL = "testextenderverifierid@example.com";
