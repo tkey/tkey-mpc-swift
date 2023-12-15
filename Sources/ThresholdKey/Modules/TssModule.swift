@@ -546,9 +546,17 @@ public final class TssModule {
         guard let resultJson = try JSONSerialization.jsonObject(with: resultData) as? [String: Any] else {
             throw "Invalid factor key"
         }
-        guard let deviceShareJson = resultJson["deviceShare"] as? [String: Any] else {
-            throw "Invalid factor key"
+        
+        var deviceShareJson = resultJson;
+        
+        // backward competible
+        if resultJson["deviceShare"] != nil {
+            guard let deviceShare = resultJson["deviceShare"] as? [String: Any] else {
+                throw "Invalid factor key"
+            }
+            deviceShareJson = deviceShare
         }
+
         guard let shareJson = deviceShareJson["share"] as? [String: Any] else {
             throw "Invalid factor key"
         }
