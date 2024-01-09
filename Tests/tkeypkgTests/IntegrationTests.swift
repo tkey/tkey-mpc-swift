@@ -149,7 +149,9 @@ final class integrationTests: XCTestCase {
         let share = try threshold.output_share(shareIndex: shareIndex.hex)
         print(share)
 
-        let testTags = ["tag1", "tag2", "tag3", "tag4", "tag5"]
+        // Too much tags with too much shares cause the ios complaint
+        // `Receive failed with error "Message too long"`
+        let testTags = ["tag1", "tag2", "tag3", "tags4"]
 
         var tssMods: [(ThresholdKey, String)] = []
 
