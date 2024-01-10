@@ -3,7 +3,7 @@ import FetchNodeDetails
 import Foundation
 import TorusUtils
 import XCTest
-@testable import tkey_pkg
+@testable import tkey_mpc_swift
 
 final class integrationTests: XCTestCase {
     func test_TssModule() async throws {

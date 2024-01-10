@@ -4,15 +4,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "tkey_pkg",
+    name: "tkey-mpc-swift",
     platforms: [
-        .iOS(SupportedPlatform.IOSVersion.v14),
+        .iOS(SupportedPlatform.IOSVersion.v15)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "ThresholdKey",
-            targets: ["tkey-pkg"]),
+            targets: ["tkey-mpc-swift"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -33,13 +33,13 @@ let package = Package(
                 path: "Sources/libtkey"
         ),
         .target(
-            name: "tkey-pkg",
+            name: "tkey-mpc-swift",
             dependencies: ["lib", "TorusUtils"],
             path: "Sources/ThresholdKey"
         ),
         .testTarget(
             name: "tkey-pkgTests",
-            dependencies: ["tkey-pkg", "CryptoSwift", .product(name: "JWTKit", package: "jwt-kit")],
+            dependencies: ["tkey-mpc-swift", "CryptoSwift", .product(name: "JWTKit", package: "jwt-kit")],
             path: "Tests/tkeypkgTests"
         ),
     ]
