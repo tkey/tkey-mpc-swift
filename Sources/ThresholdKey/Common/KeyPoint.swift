@@ -150,7 +150,7 @@ public final class KeyPoint: Equatable {
             key_point_encode(pointer, encoder_format, error)
         })
         guard errorCode == 0 else {
-            throw RuntimeError("Error in KeyPoint, getAsCompressedPublicKey")
+            throw RuntimeError("Error in KeyPoint, getPublicKey")
             }
         let compressed = String.init(cString: result!)
         string_free(result)
