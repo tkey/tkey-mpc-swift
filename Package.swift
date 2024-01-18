@@ -17,7 +17,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , .branch("feat/wrap-secp256")),
+        .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , .branch("inline_replace_secp256k1")),
         // dev dependencies only
         .package(name:"CryptoSwift", url: "https://github.com/krzyzanowskim/CryptoSwift.git",from: "1.5.1"),
         .package(name:"jwt-kit", url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0"),
@@ -28,13 +28,13 @@ let package = Package(
         .binaryTarget(name: "libtkey",
                       path: "Sources/libtkey/libtkey.xcframework"
         ),
-        .target(name: "lib",
+        .target(name: "tkey",
                dependencies: ["libtkey"],
                 path: "Sources/libtkey"
         ),
         .target(
             name: "tkey-mpc-swift",
-            dependencies: ["lib", "TorusUtils"],
+            dependencies: ["tkey", "TorusUtils"],
             path: "Sources/ThresholdKey"
         ),
         .testTarget(
