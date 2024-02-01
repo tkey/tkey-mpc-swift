@@ -1,6 +1,6 @@
 import Foundation
-#if canImport(lib)
-import lib
+#if canImport(tkey)
+import tkey
 #endif
 
 public final class NodeDetails {

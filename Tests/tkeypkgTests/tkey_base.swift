@@ -8,7 +8,7 @@
 import Foundation
 import XCTest
 import Foundation
-@testable import tkey_pkg
+@testable import tkey_mpc_swift
 import TorusUtils
 
 class tkey_baseTests: XCTestCase {

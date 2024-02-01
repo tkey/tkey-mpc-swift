@@ -1,8 +1,8 @@
 import Foundation
 
 import Foundation
-#if canImport(lib)
-    import lib
+#if canImport(tkey)
+    import tkey
 #endif
 import CommonSources
 import FetchNodeDetails

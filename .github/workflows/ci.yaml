@@ -2,7 +2,6 @@ on:
   push:
     branches:
       - main
-      - alpha
   pull_request:
     types:
       - opened
@@ -20,4 +19,4 @@ jobs:
         with:
           xcode-version: "14.2.0"
       - name: package
-        run: xcodebuild test -scheme tkey_pkg -destination "platform=iOS Simulator,OS=16.2,name=iPhone 14" COMPILER_INDEX_STORE_ENABLE=NO
+        run: xcodebuild test -scheme tkey-mpc-swift -destination "platform=iOS Simulator,OS=16.2,name=iPhone 14" COMPILER_INDEX_STORE_ENABLE=NO
