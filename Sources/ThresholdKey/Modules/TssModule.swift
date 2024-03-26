@@ -586,6 +586,6 @@ public final class TssModule {
             throw RuntimeError("conversion error")
         }
         let pubKey = TSSPubKeyResult.Point(x: x, y: y)
-        return TSSPubKeyResult(publicKey: pubKey, nodeIndexes: nodeIndexes)
+        return TSSPubKeyResult(publicKey: pubKey, nodeIndexes: nodeIndexes.sorted())
     }
 }
