@@ -16,7 +16,7 @@ final class integrationTests: XCTestCase {
 
         let nodeManager = NodeDetailManager(network: .sapphire(.SAPPHIRE_DEVNET))
         let nodeDetail = try await nodeManager.getNodeDetails(verifier: TORUS_TEST_VERIFIER, verifierID: TORUS_TEST_EMAIL)
-        let torusUtils = TorusUtils(serverTimeOffset: 1000, network: .sapphire(.SAPPHIRE_DEVNET))
+        let torusUtils = TorusUtils(serverTimeOffset: 1000, network: .sapphire(.SAPPHIRE_DEVNET), clientId: "CLIENT ID")
 
         let idToken = try generateIdToken(email: TORUS_TEST_EMAIL)
         let verifierParams = VerifierParams(verifier_id: TORUS_TEST_EMAIL)
@@ -123,7 +123,7 @@ final class integrationTests: XCTestCase {
 
         let nodeManager = NodeDetailManager(network: .sapphire(.SAPPHIRE_DEVNET))
         let nodeDetail = try await nodeManager.getNodeDetails(verifier: TORUS_TEST_VERIFIER, verifierID: TORUS_TEST_EMAIL)
-        let torusUtils = TorusUtils(serverTimeOffset: 1000, network: .sapphire(.SAPPHIRE_DEVNET))
+        let torusUtils = TorusUtils(serverTimeOffset: 1000, network: .sapphire(.SAPPHIRE_DEVNET), clientId: "CLIENT ID")
 
         let idToken = try generateIdToken(email: TORUS_TEST_EMAIL)
         let verifierParams = VerifierParams(verifier_id: TORUS_TEST_EMAIL)
