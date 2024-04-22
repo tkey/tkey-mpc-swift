@@ -10,5 +10,6 @@ Pod::Spec.new do |spec|
   spec.module_name = "tkey"
   spec.source       = { :git => "https://github.com/tkey/tkey-mpc-swift.git", :tag => spec.version }
   spec.vendored_framework = "Sources/libtkey/libtkey.xcframework"
+  spec.dependency 'TorusUtils', '~> 8.0.3'
   spec.source_files = "Sources/**/*.{swift,c,h}"
 end
