@@ -1,8 +1,8 @@
 import Foundation
 
 import Foundation
-#if canImport(tkey)
-    import tkey
+#if canImport(lib)
+    import lib
 #endif
 import FetchNodeDetails
 import TorusUtils

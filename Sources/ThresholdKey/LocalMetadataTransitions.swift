@@ -1,7 +1,7 @@
 import Foundation
 
-#if canImport(tkey)
-    import tkey
+#if canImport(lib)
+    import lib
 #endif
 
 public final class LocalMetadataTransitions {
