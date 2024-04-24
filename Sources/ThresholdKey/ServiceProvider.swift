@@ -1,10 +1,9 @@
 import Foundation
 import TorusUtils
-#if canImport(tkey)
-    import tkey
+#if canImport(lib)
+    import lib
 #endif
 import FetchNodeDetails
-import CommonSources
 
 public final class ServiceProvider {
     private(set) var pointer: OpaquePointer?

@@ -1,8 +1,8 @@
 import Foundation
-#if canImport(tkey)
-    import tkey
+#if canImport(lib)
+    import lib
 #endif
-import CommonSources
+import FetchNodeDetails
 import TorusUtils
 
 public class ThresholdKey {

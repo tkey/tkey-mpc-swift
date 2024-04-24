@@ -8,12 +8,12 @@
 import Foundation
 import XCTest
 import Foundation
-@testable import tkey_mpc_swift
+@testable import tkey
 import TorusUtils
 
 class tkey_baseTests: XCTestCase {
     
-    var torus = TorusUtils.init(clientId: "CLIENT ID")
+    var torus = TorusUtils.init(network: .sapphire(.SAPPHIRE_DEVNET), clientId: "CLIENT ID")
         
     override func setUp() async throws {
         let postbox_key = try! PrivateKey.generate()
