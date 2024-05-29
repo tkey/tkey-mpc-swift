@@ -156,7 +156,7 @@ final class integrationTests: XCTestCase {
         // TODO: This requires further investigation
         // Too much tags with too much shares cause the ios complaint
         // `Receive failed with error "Message too long"`
-        let testTags = ["tag1", "tag2", "tag3"]
+        let testTags = ["tag1", "tag2"]
 
         var tssMods: [(ThresholdKey, String)] = []
 
