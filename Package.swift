@@ -17,7 +17,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , from: "8.1.0"),
+        .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , from: "9.0.0"),
         // dev dependencies only
         .package(name:"jwt-kit", url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0"),
     ],
@@ -29,7 +29,8 @@ let package = Package(
         ),
         .target(name: "lib",
                dependencies: ["libtkey"],
-                path: "Sources/libtkey"
+                path: "Sources/libtkey",
+                linkerSettings:[.unsafeFlags(["-dead_strip", "-fcommon"])]
         ),
         .target(
             name: "tkey",

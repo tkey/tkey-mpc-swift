@@ -1,6 +1,6 @@
 import XCTest
 import Foundation
-@testable import tkey
+import tkey
 import Foundation
 
 final class tkey_pkgPrivateKeyModuleTests: XCTestCase {

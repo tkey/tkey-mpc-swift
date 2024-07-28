@@ -45,7 +45,7 @@ public final class TssModule {
     ///   - tss_tag: The tss tag to be set.
     ///
     /// - Throws: `RuntimeError`, indicates invalid parameters was used or invalid threshold key.
-    static func set_tss_tag(threshold_key: ThresholdKey, tss_tag: String) async throws {
+    public static func set_tss_tag(threshold_key: ThresholdKey, tss_tag: String) async throws {
         return try await withCheckedThrowingContinuation {
             continuation in
             set_tss_tag(threshold_key: threshold_key, tss_tag: tss_tag) {
@@ -579,7 +579,7 @@ public final class TssModule {
         let extendedVerifierId = try threshold_key.get_extended_verifier_id()
         let split = extendedVerifierId.components(separatedBy: "\u{001c}")
 
-        let result = try await torusUtils.getPublicAddress(endpoints: nodeDetails.torusNodeEndpoints, torusNodePubs: nodeDetails.torusNodePub, verifier: split[0], verifierId: split[1], extendedVerifierId: "\(split[1])\u{0015}\(tssTag)\u{0016}\(nonce)")
+        let result = try await torusUtils.getPublicAddress(endpoints: nodeDetails.torusNodeEndpoints, verifier: split[0], verifierId: split[1], extendedVerifierId: "\(split[1])\u{0015}\(tssTag)\u{0016}\(nonce)")
 
         guard let x = result.finalKeyData?.X, let y = result.finalKeyData?.Y, let nodeIndexes = result.nodesData?.nodeIndexes else {
             throw RuntimeError("conversion error")
