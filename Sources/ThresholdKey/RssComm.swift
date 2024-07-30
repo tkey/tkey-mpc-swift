@@ -51,7 +51,7 @@ public final class RssComm {
                     error_code?.pointee = code
                 }
                 if let data = data {
-                    var resultString: String = String(decoding: data, as: UTF8.self)
+                    let resultString: String = String(decoding: data, as: UTF8.self)
                     result = NSString(string: resultString)
                 }
             }.resume()
