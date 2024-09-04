@@ -17,7 +17,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , from: "8.1.0"),
+        .package(name: "TorusUtils", url: "https://github.com/torusresearch/torus-utils-swift" , branch: "fix/racing"),
         // dev dependencies only
         .package(name:"jwt-kit", url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0"),
     ],
