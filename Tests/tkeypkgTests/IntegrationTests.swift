@@ -15,14 +15,14 @@ final class integrationTests: XCTestCase {
 
         let nodeManager = NodeDetailManager(network: .sapphire(.SAPPHIRE_DEVNET))
         let nodeDetail = try await nodeManager.getNodeDetails(verifier: TORUS_TEST_VERIFIER, verifierID: TORUS_TEST_EMAIL)
-        let torusUtils = TorusUtils(serverTimeOffset: 1000, network: .sapphire(.SAPPHIRE_DEVNET), clientId: "CLIENT ID")
+        let torusUtils = try TorusUtils.init(params: .init(clientId: "CLIENT ID", network: .sapphire(.SAPPHIRE_DEVNET), serverTimeOffset: 1000  ))
 
         let idToken = try generateIdToken(email: TORUS_TEST_EMAIL)
         let verifierParams = VerifierParams(verifier_id: TORUS_TEST_EMAIL)
-        let retrievedShare = try await torusUtils.retrieveShares(endpoints: nodeDetail.torusNodeEndpoints, torusNodePubs: nodeDetail.torusNodePub, indexes: nodeDetail.torusIndexes, verifier: TORUS_TEST_VERIFIER, verifierParams: verifierParams, idToken: idToken)
+        let retrievedShare = try await torusUtils.retrieveShares(endpoints: nodeDetail.torusNodeEndpoints, verifier: TORUS_TEST_VERIFIER, verifierParams: verifierParams, idToken: idToken)
 
-        let signature_collection = retrievedShare.sessionData!.sessionTokenData.map { token in
-            ["data": Data(hex: token!.token).base64EncodedString(),
+        let signature_collection = retrievedShare.sessionData.sessionTokenData.map { token in
+            ["data": Data.init(hexString: token!.token)?.base64EncodedString(),
              "sig": token!.signature]
         }
 
@@ -122,14 +122,14 @@ final class integrationTests: XCTestCase {
 
         let nodeManager = NodeDetailManager(network: .sapphire(.SAPPHIRE_DEVNET))
         let nodeDetail = try await nodeManager.getNodeDetails(verifier: TORUS_TEST_VERIFIER, verifierID: TORUS_TEST_EMAIL)
-        let torusUtils = TorusUtils(serverTimeOffset: 1000, network: .sapphire(.SAPPHIRE_DEVNET), clientId: "CLIENT ID")
-
+        let torusUtils = try TorusUtils.init(params: .init(clientId: "CLIENT ID", network: .sapphire(.SAPPHIRE_DEVNET), serverTimeOffset: 1000  ))
+        
         let idToken = try generateIdToken(email: TORUS_TEST_EMAIL)
         let verifierParams = VerifierParams(verifier_id: TORUS_TEST_EMAIL)
-        let retrievedShare = try await torusUtils.retrieveShares(endpoints: nodeDetail.torusNodeSSSEndpoints, torusNodePubs: nodeDetail.torusNodePub, indexes: nodeDetail.torusIndexes, verifier: TORUS_TEST_VERIFIER, verifierParams: verifierParams, idToken: idToken)
+        let retrievedShare = try await torusUtils.retrieveShares(endpoints: nodeDetail.torusNodeSSSEndpoints, verifier: TORUS_TEST_VERIFIER, verifierParams: verifierParams, idToken: idToken)
 
-        let signature_collection = retrievedShare.sessionData!.sessionTokenData.map { token in
-            ["data": Data(hex: token!.token).base64EncodedString(),
+        let signature_collection = retrievedShare.sessionData.sessionTokenData.map { token in
+            ["data": Data.init(hexString: token!.token)?.base64EncodedString(),
              "sig": token!.signature]
         }
 

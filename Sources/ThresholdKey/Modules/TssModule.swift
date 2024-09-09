@@ -578,8 +578,8 @@ public final class TssModule {
     public static func get_dkg_pub_key(threshold_key: ThresholdKey, tssTag: String, nonce: String, nodeDetails: AllNodeDetailsModel, torusUtils: TorusUtils) async throws -> TSSPubKeyResult {
         let extendedVerifierId = try threshold_key.get_extended_verifier_id()
         let split = extendedVerifierId.components(separatedBy: "\u{001c}")
-
-        let result = try await torusUtils.getPublicAddress(endpoints: nodeDetails.torusNodeEndpoints, torusNodePubs: nodeDetails.torusNodePub, verifier: split[0], verifierId: split[1], extendedVerifierId: "\(split[1])\u{0015}\(tssTag)\u{0016}\(nonce)")
+        
+        let result = try await torusUtils.getPublicAddress(endpoints: nodeDetails.torusNodeEndpoints, verifier: split[0], verifierId: split[1], extendedVerifierId: "\(split[1])\u{0015}\(tssTag)\u{0016}\(nonce)")
 
         guard let x = result.finalKeyData?.X, let y = result.finalKeyData?.Y, let nodeIndexes = result.nodesData?.nodeIndexes else {
             throw RuntimeError("conversion error")
