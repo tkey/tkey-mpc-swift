@@ -5,7 +5,7 @@ import tkey
 import TorusUtils
 
 class tkey_baseTests: XCTestCase {
-    let options = TorusOptions(clientId: "CLIENT ID", network: .sapphire(.SAPPHIRE_DEVNET))
+    let options = TorusOptions(clientId: "CLIENT ID", network: .SAPPHIRE_DEVNET)
     var torusUtils: TorusUtils!
         
     override func setUp() async throws {

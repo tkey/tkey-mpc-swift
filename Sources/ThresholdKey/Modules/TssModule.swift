@@ -540,10 +540,10 @@ public final class TssModule {
     public static func find_device_share_index(threshold_key: ThresholdKey, factor_key: String) async throws -> String {
         let result = try await threshold_key.storage_layer_get_metadata(private_key: factor_key)
         guard let resultData = result.data(using: .utf8) else {
-            throw "Invalid factor key"
+            throw RuntimeError("Invalid factor key")
         }
         guard let resultJson = try JSONSerialization.jsonObject(with: resultData) as? [String: Any] else {
-            throw "Invalid factor key"
+            throw RuntimeError("Invalid factor key")
         }
         
         var deviceShareJson = resultJson;
@@ -551,16 +551,16 @@ public final class TssModule {
         // backward competible
         if resultJson["deviceShare"] != nil {
             guard let deviceShare = resultJson["deviceShare"] as? [String: Any] else {
-                throw "Invalid factor key"
+                throw RuntimeError("Invalid factor key")
             }
             deviceShareJson = deviceShare
         }
 
         guard let shareJson = deviceShareJson["share"] as? [String: Any] else {
-            throw "Invalid factor key"
+            throw RuntimeError("Invalid factor key")
         }
         guard let shareIndex = shareJson["shareIndex"] as? String else {
-            throw "Invalid factor key"
+            throw RuntimeError("Invalid factor key")
         }
         return shareIndex
     }
@@ -579,7 +579,7 @@ public final class TssModule {
         let extendedVerifierId = try threshold_key.get_extended_verifier_id()
         let split = extendedVerifierId.components(separatedBy: "\u{001c}")
 
-        let result = try await torusUtils.getPublicAddress(endpoints: nodeDetails.torusNodeEndpoints, verifier: split[0], verifierId: split[1], extendedVerifierId: "\(split[1])\u{0015}\(tssTag)\u{0016}\(nonce)")
+        let result = try await torusUtils.getPublicAddress(endpoints: nodeDetails.getTorusNodeEndpoints(), verifier: split[0], verifierId: split[1], extendedVerifierId: "\(split[1])\u{0015}\(tssTag)\u{0016}\(nonce)")
 
         guard let x = result.finalKeyData?.X, let y = result.finalKeyData?.Y, let nodeIndexes = result.nodesData?.nodeIndexes else {
             throw RuntimeError("conversion error")

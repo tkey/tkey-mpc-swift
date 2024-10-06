@@ -44,7 +44,7 @@ public final class ServiceProvider {
             let rssEndpoints = try JSONSerialization.data(withJSONObject: nodeDetails.getTorusNodeRSSEndpoints())
             let tssEndpoints = try JSONSerialization.data(withJSONObject: nodeDetails.getTorusNodeTSSEndpoints())
             
-            let pub = nodeDetails.torusNodePub
+            let pub = nodeDetails.getTorusNodePub()
             let pubkey = try JSONEncoder().encode(pub)
             
             sss = try NodeDetails(server_endpoints: String(data: sssEndpoints, encoding: .utf8)!, server_public_keys: String(data: pubkey, encoding: .utf8)!, serverThreshold: 3)
