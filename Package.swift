@@ -29,8 +29,7 @@ let package = Package(
         ),
         .target(name: "lib",
                dependencies: ["libtkey"],
-                path: "Sources/libtkey",
-                linkerSettings:[.unsafeFlags(["-dead_strip", "-fcommon"])]
+                path: "Sources/libtkey"
         ),
         .target(
             name: "tkey",
