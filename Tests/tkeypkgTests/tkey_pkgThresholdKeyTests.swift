@@ -1,6 +1,6 @@
 import XCTest
 import Foundation
-@testable import tkey
+import tkey
 
 final class tkey_pkgThresholdKeyTests: XCTestCase {
     func test_basic_threshold_key_reconstruct() async {

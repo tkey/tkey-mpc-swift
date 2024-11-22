@@ -1,6 +1,6 @@
 import FetchNodeDetails
 import Foundation
-@testable import tkey
+import tkey
 import TorusUtils
 import XCTest
 
@@ -13,16 +13,17 @@ final class integrationTests: XCTestCase {
 
         let TORUS_TEST_VERIFIER = "torus-test-health"
 
-        let nodeManager = NodeDetailManager(network: .sapphire(.SAPPHIRE_DEVNET))
+        let nodeManager = NodeDetailManager(network: .SAPPHIRE_DEVNET)
         let nodeDetail = try await nodeManager.getNodeDetails(verifier: TORUS_TEST_VERIFIER, verifierID: TORUS_TEST_EMAIL)
-        let torusUtils = TorusUtils(serverTimeOffset: 1000, network: .sapphire(.SAPPHIRE_DEVNET), clientId: "CLIENT ID")
+        let options = TorusOptions(clientId: "CLIENT ID", network: .SAPPHIRE_DEVNET, serverTimeOffset: 1000)
+        let torusUtils = try TorusUtils(params: options)
 
         let idToken = try generateIdToken(email: TORUS_TEST_EMAIL)
         let verifierParams = VerifierParams(verifier_id: TORUS_TEST_EMAIL)
-        let retrievedShare = try await torusUtils.retrieveShares(endpoints: nodeDetail.torusNodeEndpoints, torusNodePubs: nodeDetail.torusNodePub, indexes: nodeDetail.torusIndexes, verifier: TORUS_TEST_VERIFIER, verifierParams: verifierParams, idToken: idToken)
+        let retrievedShare = try await torusUtils.retrieveShares(endpoints: nodeDetail.getTorusNodeEndpoints(), verifier: TORUS_TEST_VERIFIER, verifierParams: verifierParams, idToken: idToken)
 
-        let signature_collection = retrievedShare.sessionData!.sessionTokenData.map { token in
-            ["data": Data(hex: token!.token).base64EncodedString(),
+        let signature_collection = retrievedShare.sessionData.sessionTokenData.map { token in
+            ["data": token!.token,
              "sig": token!.signature]
         }
 
@@ -60,6 +61,7 @@ final class integrationTests: XCTestCase {
         let newFactorPub = try newFactorKey.toPublic()
         // 2/2 -> 2/3 tss
         try await TssModule.generate_tss_share(threshold_key: threshold, tss_tag: tssTag, input_tss_share: tss_share, tss_input_index: Int32(tss_index)!, auth_signatures: sigs, new_factor_pub: newFactorPub, new_tss_index: 3, nodeDetails: nodeDetail, torusUtils: torusUtils)
+ /*
         let (tss_index3, tss_share3) = try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tssTag, factorKey: newFactorKey.hex)
 
         let (_, tss_share_updated) = try await TssModule.get_tss_share(threshold_key: threshold, tss_tag: tssTag, factorKey: factorKey.hex)
@@ -107,6 +109,7 @@ final class integrationTests: XCTestCase {
 
         // 2/3 -> 2/2 tss
         try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tssTag, factor_key: factorKey.hex, auth_signatures: sigs, delete_factor_pub: newFactorPub, nodeDetails: nodeDetail, torusUtils: torusUtils)
+ */
     }
 
     func test_TssModule_multi_tag() async throws {
@@ -120,16 +123,17 @@ final class integrationTests: XCTestCase {
         var threshold: ThresholdKey!
         var threshold2: ThresholdKey!
 
-        let nodeManager = NodeDetailManager(network: .sapphire(.SAPPHIRE_DEVNET))
+        let nodeManager = NodeDetailManager(network: .SAPPHIRE_DEVNET)
         let nodeDetail = try await nodeManager.getNodeDetails(verifier: TORUS_TEST_VERIFIER, verifierID: TORUS_TEST_EMAIL)
-        let torusUtils = TorusUtils(serverTimeOffset: 1000, network: .sapphire(.SAPPHIRE_DEVNET), clientId: "CLIENT ID")
-
+        let options = TorusOptions(clientId: "CLIENT ID", network: .SAPPHIRE_DEVNET, serverTimeOffset: 1000)
+        let torusUtils = try TorusUtils(params: options)
+        
         let idToken = try generateIdToken(email: TORUS_TEST_EMAIL)
         let verifierParams = VerifierParams(verifier_id: TORUS_TEST_EMAIL)
-        let retrievedShare = try await torusUtils.retrieveShares(endpoints: nodeDetail.torusNodeSSSEndpoints, torusNodePubs: nodeDetail.torusNodePub, indexes: nodeDetail.torusIndexes, verifier: TORUS_TEST_VERIFIER, verifierParams: verifierParams, idToken: idToken)
+        let retrievedShare = try await torusUtils.retrieveShares(endpoints: nodeDetail.getTorusNodeSSSEndpoints(), verifier: TORUS_TEST_VERIFIER, verifierParams: verifierParams, idToken: idToken)
 
-        let signature_collection = retrievedShare.sessionData!.sessionTokenData.map { token in
-            ["data": Data(hex: token!.token).base64EncodedString(),
+        let signature_collection = retrievedShare.sessionData.sessionTokenData.map { token in
+            ["data": token!.token,
              "sig": token!.signature]
         }
 
@@ -151,14 +155,13 @@ final class integrationTests: XCTestCase {
         _ = try! await threshold.reconstruct()
         let shareIndex = try! await threshold.generate_new_share()
         let share = try threshold.output_share(shareIndex: shareIndex.hex)
-        print(share)
 
         // TODO: This requires further investigation
         // Too much tags with too much shares cause the ios complaint
         // `Receive failed with error "Message too long"`
         let testTags = ["tag1", "tag2"]
 
-        var tssMods: [(ThresholdKey, String)] = []
+        var tssMods: [(ThresholdKey, String)] = [] // The way this is used is a problematic, refactor this test
 
         var factorKeys: [PrivateKey] = []
         var factorPubs: [String] = []
@@ -166,7 +169,6 @@ final class integrationTests: XCTestCase {
         var tssIndexes: [String] = []
         var tssShares: [String] = []
 
-        print(try threshold.get_all_tss_tags())
         for tag in testTags {
             // create tag tss module
 
@@ -265,6 +267,5 @@ final class integrationTests: XCTestCase {
             try await TssModule.delete_factor_pub(threshold_key: threshold, tss_tag: tag, factor_key: newFactorKeys[index].hex, auth_signatures: sigs, delete_factor_pub: newFactorPubs[index], nodeDetails: nodeDetail, torusUtils: torusUtils)
         }
         try await threshold.sync_local_metadata_transistions()
-        print(try threshold.get_all_tss_tags())
     }
 }

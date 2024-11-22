@@ -4,9 +4,9 @@ import Foundation
 #endif
 
 public struct KeyData: Decodable {
-    let id: String
-    let privateKey: String
-    let type: String
+    public let id: String
+    public let privateKey: String
+    public let type: String
 }
 
 public final class PrivateKeysModule {
