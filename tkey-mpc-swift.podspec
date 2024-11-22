@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = "tkey-mpc-swift"
-  spec.version      = "4.0.0"
+  spec.version      = "4.0.1"
   spec.platform = :ios, "14.0"
   spec.summary      = "SDK allows you to create threshold key setup natively with multiparty computation support"
   spec.homepage     = "https://web3auth.io/"
@@ -10,6 +10,6 @@ Pod::Spec.new do |spec|
   spec.module_name = "tkey"
   spec.source       = { :git => "https://github.com/tkey/tkey-mpc-swift.git", :tag => spec.version }
   spec.vendored_framework = "Sources/libtkey/libtkey.xcframework"
-  spec.dependency 'TorusUtils', '~> 10.0.0'
+  spec.dependency 'Torus-utils', '~> 10.0.0'
   spec.source_files = "Sources/**/*.{swift,c,h}"
 end
