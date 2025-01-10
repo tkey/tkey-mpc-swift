@@ -124,7 +124,6 @@ public final class RssComm {
                 
                 body.append("--\(boundary)--\r\n".data(using: .utf8)!)
                 request.httpBody = body
-                print(String(data: body, encoding: .utf8)!)
                 var resultPointer = UnsafeMutablePointer<CChar>(nil)
                 var result = NSString()
                 session.dataTask(with: request) { data, _, error in
