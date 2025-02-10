@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = "tkey-mpc-swift"
-  spec.version      = "4.0.2"
+  spec.version      = "4.0.3"
   spec.platform = :ios, "14.0"
   spec.summary      = "SDK allows you to create threshold key setup natively with multiparty computation support"
   spec.homepage     = "https://web3auth.io/"
